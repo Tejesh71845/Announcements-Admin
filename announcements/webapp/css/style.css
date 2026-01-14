@@ -1,0 +1,20 @@
+/* Enter your custom styles here */
+/* Hide the first wizard step (Select Option) in edit mode */
+.hideFirstWizardStep .sapMWizardProgressNavStep:first-child {
+    display: none !important;
+}
+
+/* Optional: Adjust spacing after hiding first step */
+.hideFirstWizardStep .sapMWizardProgressNav {
+    padding-left: 0;
+}
+
+/* RichTextEditor Error Styling */
+.richTextError .sapUiRTE {
+    border: 2px solid #e24c4c !important;
+    border-radius: 4px;
+}
+
+.richTextError iframe {
+    border: 2px solid #e24c4c !important;
+}

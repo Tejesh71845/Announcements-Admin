@@ -1,0 +1,91 @@
+_schema-version: "3.2"
+ID: com-incture-announcements
+description: Announcements
+version: 0.0.1
+modules:
+- name: com-incture-announcements-router
+  type: approuter.nodejs
+  path: router
+  requires:
+  - name: com-incture-announcements-html5-repo-runtime
+  - name: com-incture-announcements-uaa
+  - name: com-incture-announcements-destination-service
+    group: destinations
+    properties:
+      forwardAuthToken: false
+      name: ui5
+      url: https://ui5.sap.com
+  - name: com-incture-announcements-connectivity
+  parameters:
+    disk-quota: 256M
+    memory: 256M
+- name: com-incture-announcements-app-content
+  type: com.sap.application.content
+  path: .
+  requires:
+  - name: com-incture-announcements-repo-host
+    parameters:
+      content-target: true
+  build-parameters:
+    build-result: resources
+    requires:
+    - artifacts:
+      - cominctureannouncements.zip
+      name: cominctureannouncements
+      target-path: resources/
+- name: cominctureannouncements
+  type: html5
+  path: announcements
+  build-parameters:
+    build-result: dist
+    builder: custom
+    commands:
+    - npm install
+    - npm run build:cf
+    supported-platforms: []
+resources:
+- name: com-incture-announcements-uaa
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      tenant-mode: dedicated
+      xsappname: com-incture-announcements
+    service: xsuaa
+    service-plan: application
+- name: com-incture-announcements-html5-repo-runtime
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-plan: app-runtime
+- name: com-incture-announcements-destination-service
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      HTML5Runtime_enabled: false
+      init_data:
+        instance:
+          destinations:
+          - Authentication: NoAuthentication
+            Name: ui5
+            ProxyType: Internet
+            Type: HTTP
+            URL: https://ui5.sap.com
+          existing_destinations_policy: update
+      version: 1.0.0
+    service: destination
+    service-name: com-incture-announcements-destination-service
+    service-plan: lite
+- name: com-incture-announcements-connectivity
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: connectivity
+    service-plan: lite
+- name: com-incture-announcements-repo-host
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-name: com-incture-announcements-html5-service
+    service-plan: app-host
+parameters:
+  deploy_mode: html5-repo
+  enable-parallel-deployments: true

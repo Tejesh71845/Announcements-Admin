@@ -1,0 +1,32 @@
+{
+  "authenticationMethod": "route",
+  "routes": [
+    {
+      "source": "^(?:/app|/app/.*)?/resources/(.*)$",
+      "target": "/resources/$1",
+      "authenticationType": "none",
+      "destination": "ui5"
+    },
+    {
+      "source": "^/JnJ_Workzone_Portal_Destination_Java/(.*)$",
+      "target": "$1",
+      "destination": "JnJ_Workzone_Portal_Destination_Java",
+      "authenticationType": "xsuaa",
+      "csrfProtection": false
+    },
+    {
+      "source": "^/JnJ_Workzone_Portal_Destination_Node/(.*)$",
+      "target": "$1",
+      "destination": "JnJ_Workzone_Portal_Destination_Node",
+      "authenticationType": "xsuaa",
+      "csrfProtection": true
+    },
+    {
+      "source": "^(?:/app|/app/.*)?/test-resources/(.*)$",
+      "target": "/test-resources/$1",
+      "authenticationType": "none",
+      "destination": "ui5"
+    }
+  ],
+  "welcomeFile": "/cominctureannouncements"
+}

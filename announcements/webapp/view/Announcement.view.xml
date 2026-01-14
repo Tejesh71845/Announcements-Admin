@@ -1,0 +1,42 @@
+<mvc:View
+    controllerName="com.incture.announcements.controller.Announcement"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:smartTable="sap.ui.comp.smarttable"
+    height="100%"
+>
+    <smartTable:SmartTable
+        id="announcementsSmartTable"
+        entitySet="Announcements"
+        tableType="ResponsiveTable"
+        enableExport="true"
+        useVariantManagement="true"
+        useTablePersonalisation="true"
+        header="{i18n>tableTitle}"
+        showRowCount="true"
+        enableAutoBinding="false"
+        demandPopin="true"
+        class="sapUiResponsiveContentPadding"
+        smartFilterId="smartFilterBar"
+        beforeRebindTable="onBeforeRebindTable"
+        initialise="onSmartTableInit"
+    >
+        <smartTable:customToolbar>
+            <OverflowToolbar design="Transparent">
+                <ToolbarSpacer />
+                <Button
+                    text="{i18n>createButton}"
+                    type="Emphasized"
+                    icon="sap-icon://add"
+                    press="onCreatePress"
+                />
+                <Button
+                    icon="sap-icon://refresh"
+                    type="Transparent"
+                    tooltip="{i18n>refreshTooltip}"
+                    press="onRefreshPress"
+                />
+            </OverflowToolbar>
+        </smartTable:customToolbar>
+    </smartTable:SmartTable>
+</mvc:View>

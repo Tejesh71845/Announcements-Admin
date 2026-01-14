@@ -1,0 +1,16 @@
+{
+    "types": [
+        {
+            "key": "GLOBAL",
+            "text": "Global"
+        },
+        {
+            "key": "EMERGENCY",
+            "text": "Emergency"
+        },
+        {
+            "key": "PROCESS",
+            "text": "Process"
+        }
+    ]
+}

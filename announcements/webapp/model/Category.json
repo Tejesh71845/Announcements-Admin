@@ -1,0 +1,8 @@
+{
+  "category": [
+    { "key": "Reporting", "text": "Reporting" },
+    { "key": "General", "text": "General" },
+    { "key": "Planning/Forecasting", "text": "Planning/Forecasting" },
+    { "key": "A2R", "text": "A2R" }
+  ]
+}

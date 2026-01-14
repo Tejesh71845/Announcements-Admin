@@ -1,0 +1,9 @@
+<mvc:View
+    controllerName="com.incture.announcements.controller.App"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:uiTable="sap.ui.table"
+>
+    <App id="app">
+    </App>
+</mvc:View>
