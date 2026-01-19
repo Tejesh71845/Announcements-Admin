@@ -14,6 +14,31 @@
       "id": "@sap/generator-fiori:basic",
       "version": "1.19.1",
       "toolsId": "199f2ab9-2812-4e84-8b4b-a62b70b4d910"
+    },
+    "dataSources": {
+      "typeService": {
+        "uri": "/JnJ_Workzone_Portal_Destination_Node/odata/v2/type",
+        "type": "OData",
+        "settings": {
+          "odataVersion": "2.0"
+        }
+      },
+      "announcementService": {
+        "uri": "/JnJ_Workzone_Portal_Destination_Node/odata/v2/announcement",
+        "type": "OData",
+        "settings": {
+          "odataVersion": "2.0",
+          "localUri": "localService/metadata.xml",
+          "annotations": ["annotation0"]
+        }
+      },
+      "annotation0": {
+        "type": "ODataAnnotation",
+        "uri": "annotations/annotations.xml",
+        "settings": {
+          "localUri": "annotations/annotations.xml"
+        }
+      }
     }
   },
   "sap.ui": {
@@ -54,6 +79,22 @@
         "settings": {
           "bundleName": "com.incture.announcements.i18n.i18n"
         }
+      },
+      "typeModel": {
+        "dataSource": "typeService",
+        "type": "sap.ui.model.odata.ODataModel",
+        "preload": true,
+        "settings": {
+          "defaultCountMode": "Inline"
+        }
+      },
+      "announcementModel": {
+        "dataSource": "announcementService",
+        "type": "sap.ui.model.odata.ODataModel",
+        "preload": true,
+        "settings": {
+          "defaultCountMode": "Inline"
+        }
       }
     },
     "resources": {
@@ -78,13 +119,13 @@
       "routes": [
         {
           "pattern": "",
-          "name": "announcement",
-          "target": "announcement"
+          "name": "Announcement",
+          "target": "Announcement"
         }
       ],
       "targets": {
-        "announcement": {
-          "viewId": "announcement",
+        "Announcement": {
+          "viewId": "Announcement",
           "viewName": "Announcement"
         }
       }

@@ -2,41 +2,90 @@
     controllerName="com.incture.announcements.controller.Announcement"
     xmlns:mvc="sap.ui.core.mvc"
     xmlns="sap.m"
+    xmlns:core="sap.ui.core"
     xmlns:smartTable="sap.ui.comp.smarttable"
-    height="100%"
+    xmlns:customData="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1"
+    xmlns:f="sap.f"
 >
-    <smartTable:SmartTable
-        id="announcementsSmartTable"
-        entitySet="Announcements"
-        tableType="ResponsiveTable"
-        enableExport="true"
-        useVariantManagement="true"
-        useTablePersonalisation="true"
-        header="{i18n>tableTitle}"
-        showRowCount="true"
-        enableAutoBinding="false"
-        demandPopin="true"
-        class="sapUiResponsiveContentPadding"
-        smartFilterId="smartFilterBar"
-        beforeRebindTable="onBeforeRebindTable"
-        initialise="onSmartTableInit"
-    >
-        <smartTable:customToolbar>
-            <OverflowToolbar design="Transparent">
-                <ToolbarSpacer />
-                <Button
-                    text="{i18n>createButton}"
-                    type="Emphasized"
-                    icon="sap-icon://add"
-                    press="onCreatePress"
-                />
-                <Button
-                    icon="sap-icon://refresh"
-                    type="Transparent"
-                    tooltip="{i18n>refreshTooltip}"
-                    press="onRefreshPress"
-                />
-            </OverflowToolbar>
-        </smartTable:customToolbar>
-    </smartTable:SmartTable>
+    <f:DynamicPage headerExpanded="true">
+        <f:content>
+            <smartTable:SmartTable
+                id="announcementsSmartTable"
+                entitySet="Announcements"
+                tableType="ResponsiveTable"
+                enableAutoBinding="true"
+                useVariantManagement="true"
+                useTablePersonalisation="true"
+                header="Announcements"
+                showRowCount="true"
+                enableExport="false"
+                demandPopin="true"
+                class="sapUiResponsiveContentPadding"
+                beforeRebindTable="onBeforeRebindTable"
+                enableAutoColumnWidth="true"
+                placeToolbarInTable="true"
+            >
+        
+                <smartTable:customToolbar>
+                    <OverflowToolbar design="Transparent">
+                        <ToolbarSpacer />
+                        <Button
+                            text="Create"
+                            type="Emphasized"
+                            icon="sap-icon://add"
+                            press="onCreatePress"
+                        />
+                        <Button
+                            icon="sap-icon://refresh"
+                            type="Transparent"
+                            tooltip="Refresh"
+                            press="onRefreshPress"
+                        />
+                    </OverflowToolbar>
+                </smartTable:customToolbar>
+                <smartTable:layoutData>
+                    <FlexItemData
+                        growFactor="1"
+                        baseSize="0%"
+                    />
+                </smartTable:layoutData>
+                <Table
+                    growing="true"
+                    growingThreshold="5"
+                >
+                    <columns>
+                        <Column>
+                            <Text text="Actions" />
+                            <customData>
+                                <core:CustomData
+                                    key="p13nData"
+                                    value="{'columnKey': 'Actions', 'columnIndex': '31', 'leadingProperty': 'Actions', 'sortProperty': 'Actions', 'filterProperty': 'Actions'}"
+                                />
+                            </customData>
+                        </Column>
+                    </columns>
+                    <items>
+                        <ColumnListItem type="Active">
+                            <cells>
+                                <HBox justifyContent="Center">
+                                    <Button
+                                        icon="sap-icon://edit"
+                                        type="Transparent"
+                                        tooltip="Edit"
+                                        press="onEditPress"
+                                    />
+                                    <Button
+                                        icon="sap-icon://delete"
+                                        type="Transparent"
+                                        tooltip="Delete"
+                                        press="onDeletePress"
+                                    />
+                                </HBox>
+                            </cells>
+                        </ColumnListItem>
+                    </items>
+                </Table>
+            </smartTable:SmartTable>
+        </f:content>
+    </f:DynamicPage>
 </mvc:View>

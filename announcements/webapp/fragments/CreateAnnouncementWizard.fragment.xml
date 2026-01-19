@@ -249,12 +249,12 @@
                             </VBox>
 
                             <!-- Draft Mode Message -->
-                            <MessageStrip
+                            <!-- <MessageStrip
                                 text="{i18n>draftModePublishLaterMessage}"
                                 type="Information"
                                 visible="{= ${wizardModel>/publishOption} === 'UNPUBLISH'}"
                                 class="sapUiMediumMarginTop"
-                            />
+                            /> -->
                         </VBox>
                     </content>
                 </WizardStep>
@@ -707,7 +707,7 @@
                 visible="{wizardModel>/showCancelButton}"
             />
 
-            <Button
+            <!-- <Button
                 id="draftButton"
                 text="{i18n>draftButton}"
                 type="Transparent"
@@ -715,7 +715,7 @@
                 icon="sap-icon://save"
                 visible="{= ${wizardModel>/showDraftButton} &amp;&amp; ${wizardModel>/currentFlow} !== 'BULK'}"
                 enabled="{wizardModel>/draftEnabled}"
-            />
+            /> -->
 
             <Button
                 id="submitButton"

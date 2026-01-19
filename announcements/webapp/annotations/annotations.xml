@@ -1,121 +1,45 @@
-<edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
-    <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/Common.xml">
-        <edmx:Include Namespace="com.sap.vocabularies.Common.v1" Alias="Common"/>
-    </edmx:Reference>
-    <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/UI.xml">
-        <edmx:Include Namespace="com.sap.vocabularies.UI.v1" Alias="UI"/>
-    </edmx:Reference>
-    <edmx:Reference Uri="/destinations/JnJ_Workzone_Portal_Destination_Node/v2/odata/v4/announcement/$metadata">
-        <edmx:Include Namespace="AnnouncementService"/>
-    </edmx:Reference>
-    
-    <edmx:DataServices>
-        <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="local">
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="1.0" xmlns:edmx="http://schemas.microsoft.com/ado/2007/06/edmx" xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata" xmlns:sap="http://www.sap.com/Protocols/SAPData">
+    <edmx:DataServices m:DataServiceVersion="2.0">
+        <Schema Namespace="local" xmlns="http://schemas.microsoft.com/ado/2008/09/edm">
             
-            <!-- SmartTable Configuration -->
-            <Annotations Target="AnnouncementService.Announcements">
+            <!-- Announcements Entity Annotations -->
+            <Annotations Target="AnnouncementService.Announcements" xmlns="http://docs.oasis-open.org/odata/ns/edm">
                 
-                <!-- Define columns for SmartTable -->
-                <Annotation Term="UI.LineItem">
+                <!-- Line Item - Defines columns for SmartTable -->
+                <Annotation Term="com.sap.vocabularies.UI.v1.LineItem">
                     <Collection>
-                        <Record Type="UI.DataField">
-                            <PropertyValue Property="Value" Path="title"/>
+                        <Record Type="com.sap.vocabularies.UI.v1.DataField">
                             <PropertyValue Property="Label" String="Title"/>
+                            <PropertyValue Property="Value" Path="title"/>
                         </Record>
-                        <Record Type="UI.DataField">
-                            <PropertyValue Property="Value" Path="announcementType"/>
+                        <Record Type="com.sap.vocabularies.UI.v1.DataField">
                             <PropertyValue Property="Label" String="Type"/>
+                            <PropertyValue Property="Value" Path="announcementType"/>
                         </Record>
-                        <Record Type="UI.DataField">
-                            <PropertyValue Property="Value" Path="createdAt"/>
-                            <PropertyValue Property="Label" String="Created On"/>
-                        </Record>
-                        <Record Type="UI.DataField">
-                            <PropertyValue Property="Value" Path="createdBy"/>
-                            <PropertyValue Property="Label" String="Created By"/>
-                        </Record>
-                        <Record Type="UI.DataField">
-                            <PropertyValue Property="Value" Path="modifiedAt"/>
-                            <PropertyValue Property="Label" String="Modified On"/>
-                        </Record>
-                        <Record Type="UI.DataField">
-                            <PropertyValue Property="Value" Path="modifiedBy"/>
-                            <PropertyValue Property="Label" String="Modified By"/>
-                        </Record>
-                        <Record Type="UI.DataField">
-                            <PropertyValue Property="Value" Path="publishedAt"/>
-                            <PropertyValue Property="Label" String="Published On"/>
-                        </Record>
-                        <Record Type="UI.DataField">
-                            <PropertyValue Property="Value" Path="publishedBy"/>
-                            <PropertyValue Property="Label" String="Published By"/>
-                        </Record>
-                        <Record Type="UI.DataField">
-                            <PropertyValue Property="Value" Path="announcementStatus"/>
+                        <Record Type="com.sap.vocabularies.UI.v1.DataField">
                             <PropertyValue Property="Label" String="Status"/>
+                            <PropertyValue Property="Value" Path="announcementStatus"/>
                         </Record>
-                        
-                        <!-- Custom Actions Column -->
-                        <Record Type="UI.DataFieldForAction">
-                            <PropertyValue Property="Label" String="Actions"/>
-                            <PropertyValue Property="Action" String="AnnouncementService.dummyAction"/>
-                            <PropertyValue Property="InvocationGrouping" EnumMember="UI.OperationGroupingType/Isolated"/>
+                        <Record Type="com.sap.vocabularies.UI.v1.DataField">
+                            <PropertyValue Property="Label" String="Created On"/>
+                            <PropertyValue Property="Value" Path="createdAt"/>
+                        </Record>
+                        <Record Type="com.sap.vocabularies.UI.v1.DataField">
+                            <PropertyValue Property="Label" String="Created By"/>
+                            <PropertyValue Property="Value" Path="createdBy"/>
+                        </Record>
+                        <Record Type="com.sap.vocabularies.UI.v1.DataField">
+                            <PropertyValue Property="Label" String="Start Date"/>
+                            <PropertyValue Property="Value" Path="startAnnouncement"/>
+                        </Record>
+                        <Record Type="com.sap.vocabularies.UI.v1.DataField">
+                            <PropertyValue Property="Label" String="End Date"/>
+                            <PropertyValue Property="Value" Path="endAnnouncement"/>
                         </Record>
                     </Collection>
                 </Annotation>
                 
-                <!-- Filter Bar Fields -->
-                <Annotation Term="UI.SelectionFields">
-                    <Collection>
-                        <PropertyPath>title</PropertyPath>
-                        <PropertyPath>announcementType</PropertyPath>
-                        <PropertyPath>announcementStatus</PropertyPath>
-                        <PropertyPath>createdBy</PropertyPath>
-                        <PropertyPath>publishedBy</PropertyPath>
-                    </Collection>
-                </Annotation>
-                
-            </Annotations>
-            
-            <!-- Field-level annotations -->
-            <Annotations Target="AnnouncementService.Announcements/title">
-                <Annotation Term="Common.Label" String="Title"/>
-                <Annotation Term="UI.HiddenFilter" Bool="false"/>
-            </Annotations>
-            
-            <Annotations Target="AnnouncementService.Announcements/announcementType">
-                <Annotation Term="Common.Label" String="Announcement Type"/>
-            </Annotations>
-            
-            <Annotations Target="AnnouncementService.Announcements/announcementStatus">
-                <Annotation Term="Common.Label" String="Status"/>
-                <Annotation Term="Common.Text" Path="announcementStatus">
-                    <Annotation Term="UI.TextArrangement" EnumMember="UI.TextArrangementType/TextOnly"/>
-                </Annotation>
-            </Annotations>
-            
-            <Annotations Target="AnnouncementService.Announcements/createdAt">
-                <Annotation Term="Common.Label" String="Created On"/>
-            </Annotations>
-            
-            <Annotations Target="AnnouncementService.Announcements/createdBy">
-                <Annotation Term="Common.Label" String="Created By"/>
-            </Annotations>
-            
-            <Annotations Target="AnnouncementService.Announcements/modifiedAt">
-                <Annotation Term="Common.Label" String="Modified On"/>
-            </Annotations>
-            
-            <Annotations Target="AnnouncementService.Announcements/modifiedBy">
-                <Annotation Term="Common.Label" String="Modified By"/>
-            </Annotations>
-            
-            <Annotations Target="AnnouncementService.Announcements/publishedAt">
-                <Annotation Term="Common.Label" String="Published On"/>
-            </Annotations>
-            
-            <Annotations Target="AnnouncementService.Announcements/publishedBy">
-                <Annotation Term="Common.Label" String="Published By"/>
             </Annotations>
             
         </Schema>

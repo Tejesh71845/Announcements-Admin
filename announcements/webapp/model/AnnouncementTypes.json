@@ -2,11 +2,11 @@
     "types": [
         {
             "key": "GLOBAL",
-            "text": "Global"
+            "text": "Planned Scheduled"
         },
         {
             "key": "EMERGENCY",
-            "text": "Emergency"
+            "text": "Important Announcement"
         },
         {
             "key": "PROCESS",

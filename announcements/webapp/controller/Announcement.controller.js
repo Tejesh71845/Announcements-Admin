@@ -17,112 +17,81 @@ sap.ui.define([
          * ======================================== */
 
         onInit: function () {
-            this._initializeMainModel();
+            var oComponent = this.getOwnerComponent();
+            this._router = oComponent.getRouter();
+            this._router.getRoute("Announcement").attachPatternMatched(this._handleRouteMatched, this);
+        },
+
+
+        _handleRouteMatched: async function (oEvent) {
+            //Initialise models and fields
+            var oAnnouncementModel = this.getOwnerComponent().getModel("announcementModel");
             this._initWizardModel();
-            // 1. Check if typeModel is loaded
-            const oTypeModel = this.getOwnerComponent().getModel("typeModel");
-            console.log("TypeModel loaded:", !!oTypeModel);
-
-            if (oTypeModel) {
-                // 2. Check metadata loading
-                oTypeModel.attachMetadataLoaded(() => {
-                    console.log("✅ TypeModel metadata loaded successfully");
-                });
-
-                oTypeModel.attachMetadataFailed((oEvent) => {
-                    console.error("❌ TypeModel metadata failed:", oEvent.getParameters());
-                });
-
-                // 3. Log service URL
-                console.log("TypeModel Service URL:", oTypeModel.sServiceUrl);
-            }
-
-            // 4. Initialize category model
             this._initCategoryModel();
             this._initAnnouncementTypeModel();
             this._editContext = null;
             this._oWizardDialog = null;
             this._oRichTextEditor = null;
+
+            var oAnnouncementsSmartTable = this.getView().byId("announcementsSmartTable");
+            oAnnouncementsSmartTable.setModel(oAnnouncementModel);
         },
 
-        // Add this test function to your controller
-        testTypeService: function () {
-            const oTypeModel = this.getOwnerComponent().getModel("typeModel");
-
-            // Test 1: Simple read
-            oTypeModel.read("/Types", {
-                success: (data) => {
-                    console.log("✅ Types fetched:", data.results.length);
-                    console.log("First type:", data.results[0]);
-                },
-                error: (err) => {
-                    console.error("❌ Error:", err);
-                    console.error("Status:", err.statusCode);
-                    console.error("Response:", err.responseText);
-                }
-            });
-
-            // Test 2: Check metadata
-            const oMetadata = oTypeModel.getServiceMetadata();
-            console.log("Metadata:", oMetadata);
-        },
-
-        /**
-         * SmartTable initialization - add action column
-         */
-        onSmartTableInit: function (oEvent) {
-            const oSmartTable = oEvent.getSource();
-            const oTable = oSmartTable.getTable();
-
-            // Add actions column
-            oTable.addColumn(new sap.m.Column({
-                hAlign: "Center",
-                width: "8rem",
-                header: new sap.m.Text({ text: "Actions" })
-            }));
-        },
-
-        /**
-         * Before rebind - add action buttons to template
-         */
         onBeforeRebindTable: function (oEvent) {
             const oBindingParams = oEvent.getParameter("bindingParams");
-            const oSmartTable = oEvent.getSource();
-            const oTable = oSmartTable.getTable();
 
-            if (oBindingParams.parameters) {
-                const oTemplate = oBindingParams.parameters.template;
+            // Add the active filter
+            const oActiveFilter = new sap.ui.model.Filter("isActive", sap.ui.model.FilterOperator.EQ, true);
 
-                if (oTemplate) {
-                    // Add action buttons cell
-                    oTemplate.addCell(new sap.m.HBox({
-                        justifyContent: "Center",
-                        items: [
-                            new sap.m.Button({
-                                icon: "sap-icon://edit",
-                                type: "Transparent",
-                                tooltip: "Edit",
-                                press: this.onEditPress.bind(this)
-                            }),
-                            new sap.m.Button({
-                                icon: "sap-icon://delete",
-                                type: "Transparent",
-                                tooltip: "Delete",
-                                press: this.onDeletePress.bind(this)
-                            })
-                        ]
-                    }));
-                }
+            if (!oBindingParams.filters) {
+                oBindingParams.filters = [];
             }
+            oBindingParams.filters.push(oActiveFilter);
+
+            // Ensure toTypes is expanded
+            if (!oBindingParams.parameters) {
+                oBindingParams.parameters = {};
+            }
+            oBindingParams.parameters.expand = "toTypes";
         },
 
-        /* ========================================
-         * MODEL INITIALIZATION
-         * ======================================== */
+        refreshSmartTable: function () {
+            const oSmartTable = this.byId("announcementsSmartTable");
+            const oModel = this.getOwnerComponent().getModel("announcementModel");
 
-        _initializeMainModel: function () {
-            const oModel = new JSONModel({ announcements: [] });
-            this.getView().setModel(oModel);
+            console.log("Refreshing SmartTable...");
+
+            // Step 1: Refresh the OData model
+            if (oModel) {
+                oModel.refresh(true); // Force refresh
+                console.log("Model refreshed");
+            }
+
+            // Step 2: Refresh the SmartTable
+            if (oSmartTable) {
+                // Get the inner table
+                const oTable = oSmartTable.getTable();
+
+                if (oTable) {
+                    // Refresh the table binding
+                    const oBinding = oTable.getBinding("items");
+                    if (oBinding) {
+                        oBinding.refresh(true); // Force refresh
+                        console.log("Table binding refreshed");
+                    }
+                }
+
+                // Rebind the entire SmartTable
+                oSmartTable.rebindTable();
+                console.log("SmartTable rebound");
+            }
+
+            console.log("Complete refresh done");
+        },
+
+        onRefreshPress: function () {
+            this.refreshSmartTable();
+            MessageToast.show("Table refreshed");
         },
 
         _initAnnouncementTypeModel: function () {
@@ -133,6 +102,93 @@ sap.ui.define([
             this.getView().setModel(oAnnouncementTypeModel, "announcementTypeModel");
         },
 
+        // _initCategoryModel: function () {
+        //     const oCategoryModel = new sap.ui.model.json.JSONModel({
+        //         category: [],
+        //         idToNameMap: {},
+        //         nameToIdMap: {}
+        //     });
+        //     this.getView().setModel(oCategoryModel, "categoryModel");
+
+        //     // Use destination with the correct path
+        //     const sUrl = "/JnJ_Workzone_Portal_Destination_Node/odata/v2/type/Types";
+
+        //     // Show busy indicator
+        //     this.getView().setBusy(true);
+
+        //     $.ajax({
+        //         url: sUrl,
+        //         method: "GET",
+        //         dataType: "json",
+        //         success: (oData) => {
+        //             this.getView().setBusy(false);
+
+        //             // OData V2 structure: data is in d.results
+        //             const aEntries = oData.d?.results || [];
+        //             const aDropdownData = [];
+        //             const idToName = {};
+        //             const nameToId = {};
+
+        //             aEntries.forEach((entry) => {
+        //                 // Use typeId and name from the response
+        //                 const typeId = entry.typeId;
+        //                 const typeName = entry.name;
+
+        //                 // Validate data before processing
+        //                 if (typeId && typeName) {
+        //                     aDropdownData.push({
+        //                         key: typeId,
+        //                         text: typeName
+        //                     });
+        //                     idToName[typeId] = typeName;
+        //                     nameToId[typeName] = typeId;
+        //                 } else {
+        //                     console.warn("Invalid type entry:", entry);
+        //                 }
+        //             });
+
+        //             oCategoryModel.setProperty("/category", aDropdownData);
+        //             oCategoryModel.setProperty("/idToNameMap", idToName);
+        //             oCategoryModel.setProperty("/nameToIdMap", nameToId);
+
+        //             console.log("Categories loaded:", aDropdownData.length);
+
+        //             // Fetch announcements after categories are loaded
+        //             this._fetchAnnouncements();
+        //         },
+        //         error: (jqXHR, textStatus, errorThrown) => {
+        //             this.getView().setBusy(false);
+
+        //             // Enhanced error logging
+        //             console.error("Failed to fetch category data:", {
+        //                 status: jqXHR.status,
+        //                 statusText: textStatus,
+        //                 error: errorThrown,
+        //                 response: jqXHR.responseText
+        //             });
+
+        //             // Parse error response
+        //             let errorMessage = "Failed to fetch category data";
+        //             try {
+        //                 if (jqXHR.responseText) {
+        //                     const errorObj = JSON.parse(jqXHR.responseText);
+        //                     errorMessage = errorObj.error?.message?.value || errorObj.error?.message || errorMessage;
+        //                 }
+        //             } catch (e) {
+        //                 console.error("Error parsing error response:", e);
+        //                 errorMessage = `${errorMessage} (Status: ${jqXHR.status})`;
+        //             }
+
+        //             // Show detailed error to user
+        //             sap.m.MessageBox.error(errorMessage, {
+        //                 title: "Error Loading Categories",
+        //                 details: `${textStatus || "Internal Server Error"}\nStatus: ${jqXHR.status}`
+        //             });
+        //         }
+        //     });
+        // },
+
+
         _initCategoryModel: function () {
             const oCategoryModel = new sap.ui.model.json.JSONModel({
                 category: [],
@@ -141,31 +197,30 @@ sap.ui.define([
             });
             this.getView().setModel(oCategoryModel, "categoryModel");
 
-            // Use destination with the correct path
-            const sUrl = "/JnJ_Workzone_Portal_Destination_Node/odata/v2/type/Types";
+            const oDataModel = this.getOwnerComponent().getModel("typeModel");
 
-            // Show busy indicator
+            this._loadCategories(oDataModel, oCategoryModel);
+        },
+
+        _loadCategories: function (oDataModel, oCategoryModel) {
             this.getView().setBusy(true);
 
-            $.ajax({
-                url: sUrl,
-                method: "GET",
-                dataType: "json",
+            oDataModel.read("/Types", {
+                urlParameters: {
+                    "$select": "typeId,name,description"
+                },
                 success: (oData) => {
                     this.getView().setBusy(false);
 
-                    // OData V2 structure: data is in d.results
-                    const aEntries = oData.d?.results || [];
+                    const aEntries = oData.results || [];
                     const aDropdownData = [];
                     const idToName = {};
                     const nameToId = {};
 
                     aEntries.forEach((entry) => {
-                        // Use typeId and name from the response
                         const typeId = entry.typeId;
                         const typeName = entry.name;
 
-                        // Validate data before processing
                         if (typeId && typeName) {
                             aDropdownData.push({
                                 key: typeId,
@@ -173,8 +228,6 @@ sap.ui.define([
                             });
                             idToName[typeId] = typeName;
                             nameToId[typeName] = typeId;
-                        } else {
-                            console.warn("Invalid type entry:", entry);
                         }
                     });
 
@@ -184,40 +237,19 @@ sap.ui.define([
 
                     console.log("Categories loaded:", aDropdownData.length);
 
-                    // Fetch announcements after categories are loaded
-                    this._fetchAnnouncements();
-                },
-                error: (jqXHR, textStatus, errorThrown) => {
-                    this.getView().setBusy(false);
-
-                    // Enhanced error logging
-                    console.error("Failed to fetch category data:", {
-                        status: jqXHR.status,
-                        statusText: textStatus,
-                        error: errorThrown,
-                        response: jqXHR.responseText
-                    });
-
-                    // Parse error response
-                    let errorMessage = "Failed to fetch category data";
-                    try {
-                        if (jqXHR.responseText) {
-                            const errorObj = JSON.parse(jqXHR.responseText);
-                            errorMessage = errorObj.error?.message?.value || errorObj.error?.message || errorMessage;
-                        }
-                    } catch (e) {
-                        console.error("Error parsing error response:", e);
-                        errorMessage = `${errorMessage} (Status: ${jqXHR.status})`;
+                    const oSmartTable = this.byId("announcementsSmartTable");
+                    if (oSmartTable) {
+                        oSmartTable.rebindTable();
                     }
-
-                    // Show detailed error to user
-                    sap.m.MessageBox.error(errorMessage, {
-                        title: "Error Loading Categories",
-                        details: `${textStatus || "Internal Server Error"}\nStatus: ${jqXHR.status}`
-                    });
+                },
+                error: (oError) => {
+                    this.getView().setBusy(false);
+                    console.error("Failed to fetch categories:", oError);
+                    sap.m.MessageBox.error("Failed to load categories");
                 }
             });
         },
+
 
 
         _initRichTextEditor: function (sContainerId) {
@@ -236,10 +268,10 @@ sap.ui.define([
                 customToolbar: true,
                 showGroupFont: true,
                 showGroupLink: true,
-                showGroupInsert: true,
+                showGroupInsert: false,
                 value: sDescription,
-                valueState: "{wizardModel>/descriptionValueState}",           // Add this
-                valueStateText: "{wizardModel>/descriptionValueStateText}",   // Add this
+                // valueState: "{wizardModel>/descriptionValueState}",
+                // valueStateText: "{wizardModel>/descriptionValueStateText}",
                 ready: function () {
                     this.addButtonGroup("styles").addButtonGroup("table");
                 },
@@ -262,66 +294,66 @@ sap.ui.define([
          * DATA FETCHING
          * ======================================== */
 
-        _fetchAnnouncements: function () {
-            const sUrl = "/JnJ_Workzone_Portal_Destination_Java/odata/v4/AnnouncementService/Announcements?$expand=toTypes($expand=type)";
+        // _fetchAnnouncements: function () {
+        //     const sUrl = "/JnJ_Workzone_Portal_Destination_Java/odata/v4/AnnouncementService/Announcements?$expand=toTypes($expand=type)";
 
-            $.ajax({
-                url: sUrl,
-                method: "GET",
-                dataType: "json",
-                success: (oData) => {
-                    const oCategoryModel = this.getView().getModel("categoryModel");
-                    const idToNameMap = oCategoryModel.getProperty("/idToNameMap") || {};
-                    const aEntries = oData.value || [];
+        //     $.ajax({
+        //         url: sUrl,
+        //         method: "GET",
+        //         dataType: "json",
+        //         success: (oData) => {
+        //             const oCategoryModel = this.getView().getModel("categoryModel");
+        //             const idToNameMap = oCategoryModel.getProperty("/idToNameMap") || {};
+        //             const aEntries = oData.value || [];
 
-                    // Filter out inactive announcements
-                    const aActiveEntries = aEntries.filter(entry => entry.isActive !== false);
+        //             // Filter out inactive announcements
+        //             const aActiveEntries = aEntries.filter(entry => entry.isActive !== false);
 
-                    const aMapped = aActiveEntries.map((entry) => {
-                        const aTypeIds = (entry.toTypes || [])
-                            .map(item => item.type?.typeId)
-                            .filter(Boolean);
+        //             const aMapped = aActiveEntries.map((entry) => {
+        //                 const aTypeIds = (entry.toTypes || [])
+        //                     .map(item => item.type?.typeId)
+        //                     .filter(Boolean);
 
-                        const aCategoryNames = aTypeIds
-                            .map(id => idToNameMap[id])
-                            .filter(Boolean);
+        //                 const aCategoryNames = aTypeIds
+        //                     .map(id => idToNameMap[id])
+        //                     .filter(Boolean);
 
-                        return {
-                            id: entry.announcementId,
-                            title: entry.title,
-                            category: aCategoryNames.join(", ") || "N/A",
-                            description: entry.description,
-                            announcementType: entry.announcementType,
-                            createdOn: entry.createdAt,
-                            createdBy: entry.createdBy,
-                            modifiedOn: entry.modifiedAt,
-                            modifiedBy: entry.modifiedBy,
-                            publishedAt: entry.publishedAt,           // NEW
-                            publishedBy: entry.publishedBy,           // NEW
-                            announcementStatus: entry.announcementStatus || "DRAFT",  // NEW
-                            publishStatus: entry.publishStatus,       // NEW
-                            startAnnouncement: entry.startAnnouncement, // NEW
-                            endAnnouncement: entry.endAnnouncement,   // NEW
-                            typeId: aTypeIds,
-                            isActive: entry.isActive
-                        };
-                    });
+        //                 return {
+        //                     id: entry.announcementId,
+        //                     title: entry.title,
+        //                     category: aCategoryNames.join(", ") || "N/A",
+        //                     description: entry.description,
+        //                     announcementType: entry.announcementType,
+        //                     createdOn: entry.createdAt,
+        //                     createdBy: entry.createdBy,
+        //                     modifiedOn: entry.modifiedAt,
+        //                     modifiedBy: entry.modifiedBy,
+        //                     publishedAt: entry.publishedAt,           // NEW
+        //                     publishedBy: entry.publishedBy,           // NEW
+        //                     announcementStatus: entry.announcementStatus || "DRAFT",  // NEW
+        //                     publishStatus: entry.publishStatus,       // NEW
+        //                     startAnnouncement: entry.startAnnouncement, // NEW
+        //                     endAnnouncement: entry.endAnnouncement,   // NEW
+        //                     typeId: aTypeIds,
+        //                     isActive: entry.isActive
+        //                 };
+        //             });
 
-                    // Sort announcements by createdOn date in descending order
-                    aMapped.sort((a, b) => {
-                        const dateA = a.createdOn ? new Date(a.createdOn).getTime() : 0;
-                        const dateB = b.createdOn ? new Date(b.createdOn).getTime() : 0;
-                        return dateB - dateA;
-                    });
+        //             // Sort announcements by createdOn date in descending order
+        //             aMapped.sort((a, b) => {
+        //                 const dateA = a.createdOn ? new Date(a.createdOn).getTime() : 0;
+        //                 const dateB = b.createdOn ? new Date(b.createdOn).getTime() : 0;
+        //                 return dateB - dateA;
+        //             });
 
-                    this.getView().getModel().setProperty("/announcements", aMapped);
-                },
-                error: (xhr, status, err) => {
-                    console.error("Failed to fetch announcements:", status, err);
-                    sap.m.MessageBox.error("Unable to load announcements.");
-                }
-            });
-        },
+        //             this.getView().getModel().setProperty("/announcements", aMapped);
+        //         },
+        //         error: (xhr, status, err) => {
+        //             console.error("Failed to fetch announcements:", status, err);
+        //             sap.m.MessageBox.error("Unable to load announcements.");
+        //         }
+        //     });
+        // },
         _initWizardModel: function () {
             const oWizardData = this._getDefaultWizardData();
             const oWizardModel = new JSONModel(oWizardData);
@@ -748,12 +780,36 @@ sap.ui.define([
             }
         },
 
+
+        /**
+ * Fetch CSRF Token
+ */
+        _getCSRFToken: function () {
+            return new Promise((resolve, reject) => {
+                $.ajax({
+                    url: "/JnJ_Workzone_Portal_Destination_Node/odata/v2/announcement/",
+                    method: "GET",
+                    headers: {
+                        "X-CSRF-Token": "Fetch"
+                    },
+                    success: function (data, textStatus, request) {
+                        const token = request.getResponseHeader("X-CSRF-Token");
+                        resolve(token);
+                    },
+                    error: function (xhr, status, err) {
+                        console.error("CSRF token fetch failed:", status, err);
+                        reject(err);
+                    }
+                });
+            });
+        },
+
         onSubmitPress: function () {
             const oWizardModel = this.getView().getModel("wizardModel");
             const sCurrentFlow = oWizardModel.getProperty("/currentFlow");
+            const bIsEditMode = oWizardModel.getProperty("/isEditMode");
 
             if (sCurrentFlow === "BULK") {
-                // Validate bulk table data before submitting
                 const bulkData = oWizardModel.getProperty("/bulkData") || [];
 
                 if (bulkData.length === 0) {
@@ -762,13 +818,11 @@ sap.ui.define([
                 }
 
                 const validationResult = this._validateBulkTableData(bulkData);
-
                 if (!validationResult.isValid) {
                     this._showBulkValidationErrorDialog(validationResult.errors);
                     return;
                 }
 
-                // If validation passes, confirm and submit
                 MessageBox.confirm(
                     `Are you sure you want to submit ${bulkData.length} announcement(s)?`,
                     {
@@ -793,7 +847,6 @@ sap.ui.define([
                     return;
                 }
 
-                const bIsEditMode = oWizardModel.getProperty("/isEditMode");
                 const sConfirmMessage = bIsEditMode
                     ? "Are you sure you want to submit these changes?"
                     : "Are you sure you want to submit this announcement?";
@@ -804,7 +857,11 @@ sap.ui.define([
                     emphasizedAction: MessageBox.Action.YES,
                     onClose: (oAction) => {
                         if (oAction === MessageBox.Action.YES) {
-                            this._handleSubmitAnnouncement();
+                            if (bIsEditMode) {
+                                this._handleEditSubmit();
+                            } else {
+                                this._handleSubmitAnnouncement();
+                            }
                         }
                     }
                 });
@@ -840,20 +897,21 @@ sap.ui.define([
                 .filter(Boolean);
             const sAnnouncementType = aSelectedTypes.join(",");
 
+            const oBusy = new sap.m.BusyDialog({ text: "Submitting announcement..." });
+            oBusy.open();
+
             this.getCurrentUserEmail()
                 .then((sUserEmail) => {
                     let announcementStatus, startAnnouncement, endAnnouncement;
                     const currentDateTime = new Date().toISOString();
 
                     if (sPublishOption === "PUBLISH") {
-                        // Publish Now: Status = PUBLISHED
                         announcementStatus = "PUBLISHED";
                         startAnnouncement = currentDateTime;
                         const oEndDate = new Date(sEndDate);
                         oEndDate.setDate(oEndDate.getDate() + 1);
                         endAnnouncement = oEndDate.toISOString();
                     } else {
-                        // Publish Later: Status = TO_BE_PUBLISHED
                         announcementStatus = "TO_BE_PUBLISHED";
                         startAnnouncement = new Date(sStartDate).toISOString();
                         const oEndDate = new Date(sEndDate);
@@ -866,43 +924,62 @@ sap.ui.define([
                             title: sTitle,
                             description: sDescription,
                             announcementType: sAnnouncementType,
-                            isRead: false,
+                            announcementStatus: announcementStatus,
                             startAnnouncement: startAnnouncement,
                             endAnnouncement: endAnnouncement,
-                            announcementStatus: announcementStatus,
                             publishedBy: sUserEmail,
-                            publishedAt: startAnnouncement, // Use start date as published date
                             toTypes: aTypeIds.map(typeId => ({
                                 type: { typeId: typeId }
                             }))
                         }]
                     };
 
-                    const oBusy = new sap.m.BusyDialog({ text: "Submitting announcement..." });
-                    oBusy.open();
+                    // Fetch CSRF token first
+                    this._getCSRFToken()
+                        .then((csrfToken) => {
+                            $.ajax({
+                                url: "/JnJ_Workzone_Portal_Destination_Node/odata/v2/announcement/bulkCreateAnnouncements",
+                                method: "POST",
+                                contentType: "application/json",
+                                dataType: "json",
+                                headers: {
+                                    "X-CSRF-Token": csrfToken  // Include CSRF token
+                                },
+                                data: JSON.stringify(oPayload),
+                                success: (oResponse) => {
+                                    oBusy.close();
+                                    this._oWizardDialog.close();
+                                    const sMessage = announcementStatus === "PUBLISHED"
+                                        ? `Announcement '${sTitle}' published successfully!`
+                                        : `Announcement '${sTitle}' scheduled for publication!`;
+                                    sap.m.MessageToast.show(sMessage);
 
-                    $.ajax({
-                        url: "/JnJ_Workzone_Portal_Destination_Java/odata/v4/AnnouncementService/bulkCreateAnnouncements",
-                        method: "POST",
-                        contentType: "application/json",
-                        dataType: "json",
-                        data: JSON.stringify(oPayload),
-                        success: (oResponse) => {
+                                    // Add delay before refresh
+                                    setTimeout(() => {
+                                        this.refreshSmartTable();
+                                    }, 500);
+                                },
+                                error: (xhr, status, err) => {
+                                    oBusy.close();
+                                    console.error("Create announcement failed:", status, err);
+                                    console.error("Response:", xhr.responseText);
+                                    let sErrorMessage = "Failed to create announcement. Please try again.";
+                                    if (xhr.responseJSON?.error?.message) {
+                                        sErrorMessage = xhr.responseJSON.error.message;
+                                    }
+                                    sap.m.MessageBox.error(sErrorMessage);
+                                }
+                            });
+                        })
+                        .catch((err) => {
                             oBusy.close();
-                            this._oWizardDialog.close();
-                            sap.m.MessageToast.show(`Announcement '${sTitle}' submitted successfully!`);
-                            this._fetchAnnouncements();
-                        },
-                        error: (xhr, status, err) => {
-                            oBusy.close();
-                            console.error("Submit failed:", status, err);
-                            let sErrorMessage = "Failed to submit announcement.";
-                            if (xhr.responseJSON?.error?.message) {
-                                sErrorMessage = xhr.responseJSON.error.message;
-                            }
-                            sap.m.MessageBox.error(sErrorMessage);
-                        }
-                    });
+                            console.error("CSRF token fetch failed:", err);
+                            sap.m.MessageBox.error("Failed to initialize request. Please try again.");
+                        });
+                })
+                .catch((error) => {
+                    oBusy.close();
+                    sap.m.MessageBox.error("Failed to get current user: " + error.message);
                 });
         },
         /* ========================================
@@ -910,17 +987,15 @@ sap.ui.define([
          * ======================================== */
 
         _validateRichTextDescription: function (oWizardModel) {
-            // Get raw HTML from wizard model
             const sDescriptionHTML = oWizardModel.getProperty("/description") || "";
-
-            // Remove HTML tags and check plain text length
             const sPlainText = sDescriptionHTML.replace(/<[^>]*>/g, "").trim();
             const bValid = sPlainText.length > 0;
 
-            // Apply valueState and valueStateText
-            this._setValidationState(oWizardModel, "description", bValid, "Description is required");
+            // Store validation state in wizard model (not in RTE)
+            oWizardModel.setProperty("/descriptionValueState", bValid ? "None" : "Error");
+            oWizardModel.setProperty("/descriptionValueStateText", bValid ? "" : "Description is required");
 
-            // Highlight/Remove red border manually for RichTextEditor
+            // Visual feedback using CSS class instead of valueState
             const oContainer = this.byId("richTextContainer");
             if (oContainer) {
                 if (!bValid) {
@@ -930,18 +1005,16 @@ sap.ui.define([
                 }
             }
 
-            // Fetch other fields for overall step validity
+            // Check overall step validity
             const sTitle = (oWizardModel.getProperty("/title") || "").trim();
             const aAnnouncementType = oWizardModel.getProperty("/announcementType") || [];
             const aCategory = oWizardModel.getProperty("/category") || [];
 
-            const bOverallValid =
-                sTitle.length > 0 &&
+            const bOverallValid = sTitle.length > 0 &&
                 aAnnouncementType.length > 0 &&
                 aCategory.length > 0 &&
                 bValid;
 
-            // Update wizard step validation
             oWizardModel.setProperty("/singleCreateStepValidated", bOverallValid);
 
             const oStep = this.byId("singleCreateStep");
@@ -2034,17 +2107,102 @@ sap.ui.define([
          * EDIT FUNCTIONALITY
          * ======================================== */
 
+
         onEditPress: function (oEvent) {
-            const oBindingContext = oEvent.getSource().getBindingContext();
+            const oButton = oEvent.getSource();
+            const oListItem = oButton.getParent().getParent();
+            const oBindingContext = oListItem.getBindingContext();
+
+            if (!oBindingContext) {
+                MessageBox.error("Unable to get announcement data. Please refresh and try again.");
+                return;
+            }
+
             const oData = oBindingContext.getObject();
 
+            console.log("Edit Data:", oData); // Debug log
+            console.log("toTypes:", oData.toTypes); // Debug log
+
+            // Extract typeIds with improved logic
+            const aTypeIds = this._extractTypeIds(oData.toTypes);
+
+            console.log("Extracted typeIds:", aTypeIds); // Debug log
+
+            const oEditData = {
+                id: oData.announcementId,
+                title: oData.title,
+                announcementType: oData.announcementType,
+                description: oData.description,
+                createdBy: oData.createdBy,
+                createdOn: oData.createdAt,
+                modifiedBy: oData.modifiedBy,
+                modifiedOn: oData.modifiedAt,
+                publishedAt: oData.publishedAt,
+                publishedBy: oData.publishedBy,
+                announcementStatus: oData.announcementStatus,
+                publishStatus: this._determinePublishStatus(oData),
+                startAnnouncement: oData.startAnnouncement,
+                endAnnouncement: oData.endAnnouncement,
+                isActive: oData.isActive,
+                typeId: aTypeIds.length > 0 ? aTypeIds : [] // Ensure we always have an array
+            };
+
+            console.log("Final Edit Data:", oEditData); // Debug log
+
             this._editContext = {
-                data: oData,
+                data: oEditData,
                 path: oBindingContext.getPath(),
                 isEdit: true
             };
 
-            this._openWizardForEdit(oData);
+            this._openWizardForEdit(oEditData);
+        },
+
+        _extractTypeIds: function (toTypes) {
+            if (!toTypes) {
+                return [];
+            }
+
+            // Handle both expanded results and direct array
+            const aResults = toTypes.results || toTypes;
+
+            if (!Array.isArray(aResults)) {
+                return [];
+            }
+
+            return aResults
+                .map(item => {
+                    // Try multiple possible paths for typeId
+                    if (item.type_typeId) {
+                        return item.type_typeId;
+                    }
+                    if (item.type && item.type.typeId) {
+                        return item.type.typeId;
+                    }
+                    if (item.typeId) {
+                        return item.typeId;
+                    }
+                    return null;
+                })
+                .filter(Boolean);
+        },
+        _determinePublishStatus: function (oData) {
+            if (!oData.startAnnouncement || !oData.endAnnouncement) {
+                return "";
+            }
+
+            const oToday = new Date();
+            oToday.setHours(0, 0, 0, 0);
+            const oStartDate = new Date(oData.startAnnouncement);
+            oStartDate.setHours(0, 0, 0, 0);
+
+            if (oStartDate.getTime() === oToday.getTime()) {
+                return "PUBLISH_NOW";
+            } else if (oStartDate > oToday) {
+                return "PUBLISH_LATER";
+            }
+
+            return "";
         },
 
         _openWizardForEdit: function (oEditData) {
@@ -2056,13 +2214,14 @@ sap.ui.define([
                     // Reset wizards to clean state
                     this._resetWizards();
 
-                    // Open dialog first - this is critical for DOM rendering
+                    // Open dialog first
                     this._oWizardDialog.open();
 
                     // Wait for dialog to fully render before setting up wizard
+                    // Increased timeout to ensure DOM is ready
                     setTimeout(() => {
                         this._setupSingleWizardForEdit();
-                    }, 150);
+                    }, 300); // Increased from 150ms to 300ms
                 })
                 .catch(error => {
                     MessageBox.error("Failed to open edit dialog: " + error.message);
@@ -2111,6 +2270,7 @@ sap.ui.define([
             const oCreateStep = this.byId("singleCreateStep");
 
             if (!oWizard || !oCreateStep || !oSelectionStep) {
+                console.error("Wizard or steps not found");
                 return;
             }
 
@@ -2124,10 +2284,10 @@ sap.ui.define([
             // Set current step
             oWizard.setCurrentStep(oCreateStep);
 
-            // FIXED: Set footer buttons for edit mode - show Draft and Submit
+            // Set footer buttons for edit mode
             this._setButtonVisibility({
                 showCancelButton: true,
-                showDraftButton: true,
+                showDraftButton: false,
                 showSubmitButton: true,
                 showReviewButton: false,
                 showPublishButton: false,
@@ -2135,14 +2295,24 @@ sap.ui.define([
                 showResetButton: false
             });
 
-            // Force layout + initialize RichTextEditor
+            // Force wizard layout update
             setTimeout(() => {
                 oWizard.invalidate();
 
+                // Initialize RTE after wizard is fully rendered
+                // Increased timeout for RTE initialization
                 setTimeout(() => {
+                    const sDescription = oWizardModel.getProperty("/description") || "";
+                    console.log("Initializing RTE with description:", sDescription); // Debug log
+
                     this._initRichTextEditor("richTextContainer");
-                }, 100);
-            }, 150);
+
+                    // Verify RTE was created and has the right value
+                    if (this._oRichTextEditor) {
+                        console.log("RTE initialized, value:", this._oRichTextEditor.getValue()); // Debug log
+                    }
+                }, 200); // Increased timeout
+            }, 200);
         },
 
 
@@ -2150,40 +2320,40 @@ sap.ui.define([
          * SUBMIT HANDLERS
          * ======================================== */
 
-        onPublishPress: function () {
-            const oWizardModel = this.getView().getModel("wizardModel");
-            const sCurrentFlow = oWizardModel.getProperty("/currentFlow");
-            const bIsEditMode = oWizardModel.getProperty("/isEditMode");
+        // onPublishPress: function () {
+        //     const oWizardModel = this.getView().getModel("wizardModel");
+        //     const sCurrentFlow = oWizardModel.getProperty("/currentFlow");
+        //     const bIsEditMode = oWizardModel.getProperty("/isEditMode");
 
-            // Validate publish options for BOTH flows
-            const bValidPublish = this._validatePublishOptions();
-            if (!bValidPublish) {
-                return;
-            }
+        //     // Validate publish options for BOTH flows
+        //     const bValidPublish = this._validatePublishOptions();
+        //     if (!bValidPublish) {
+        //         return;
+        //     }
 
-            // Show confirmation dialog before publishing
-            const sConfirmMessage = bIsEditMode
-                ? "Are you sure you want to publish these changes?"
-                : (sCurrentFlow === "BULK"
-                    ? "Are you sure you want to publish these announcements?"
-                    : "Are you sure you want to publish this announcement?");
+        //     // Show confirmation dialog before publishing
+        //     const sConfirmMessage = bIsEditMode
+        //         ? "Are you sure you want to publish these changes?"
+        //         : (sCurrentFlow === "BULK"
+        //             ? "Are you sure you want to publish these announcements?"
+        //             : "Are you sure you want to publish this announcement?");
 
-            MessageBox.confirm(sConfirmMessage, {
-                title: "Confirm Publish",
-                actions: [MessageBox.Action.YES, MessageBox.Action.NO],
-                emphasizedAction: MessageBox.Action.YES,
-                onClose: (oAction) => {
-                    if (oAction === MessageBox.Action.YES) {
-                        // Call submit handlers
-                        if (sCurrentFlow === "SINGLE") {
-                            bIsEditMode ? this._handleEditSubmit() : this._handleSingleSubmit();
-                        } else if (sCurrentFlow === "BULK") {
-                            this._handleBulkSubmit();
-                        }
-                    }
-                }
-            });
-        },
+        //     MessageBox.confirm(sConfirmMessage, {
+        //         title: "Confirm Publish",
+        //         actions: [MessageBox.Action.YES, MessageBox.Action.NO],
+        //         emphasizedAction: MessageBox.Action.YES,
+        //         onClose: (oAction) => {
+        //             if (oAction === MessageBox.Action.YES) {
+        //                 // Call submit handlers
+        //                 if (sCurrentFlow === "SINGLE") {
+        //                     bIsEditMode ? this._handleEditSubmit() : this._handleSingleSubmit();
+        //                 } else if (sCurrentFlow === "BULK") {
+        //                     this._handleBulkSubmit();
+        //                 }
+        //             }
+        //         }
+        //     });
+        // },
 
         onDraftPress: function () {
             // if (!this._validateSingleCreateStep()) {
@@ -2208,77 +2378,71 @@ sap.ui.define([
             this._handleDraftSubmit();
         },
 
-        _handleDraftSubmit: function () {
-            const oWizardModel = this.getView().getModel("wizardModel");
-            const sTitle = (oWizardModel.getProperty("/title") || "").trim();
-            const sDescriptionHTML = (oWizardModel.getProperty("/description") || "").trim();
-            const aAnnouncementTypeKeys = oWizardModel.getProperty("/announcementType") || [];
-            const aTypeIds = oWizardModel.getProperty("/category") || [];
+        // _handleDraftSubmit: function () {
+        //     const oWizardModel = this.getView().getModel("wizardModel");
+        //     const sTitle = (oWizardModel.getProperty("/title") || "").trim();
+        //     const sDescriptionHTML = (oWizardModel.getProperty("/description") || "").trim();
+        //     const aAnnouncementTypeKeys = oWizardModel.getProperty("/announcementType") || [];
+        //     const aTypeIds = oWizardModel.getProperty("/category") || [];
 
-            // No validation - allow saving with empty fields
-            const sDescription = this._stripHtmlTags(sDescriptionHTML);
+        //     const sDescription = this._stripHtmlTags(sDescriptionHTML);
+        //     const oAnnouncementTypeModel = this.getView().getModel("announcementTypeModel");
+        //     const aTypeList = oAnnouncementTypeModel.getProperty("/types") || [];
+        //     const aSelectedTypes = aAnnouncementTypeKeys
+        //         .map(key => aTypeList.find(t => t.key === key)?.text)
+        //         .filter(Boolean);
+        //     const sAnnouncementType = aSelectedTypes.join(",");
 
-            const oAnnouncementTypeModel = this.getView().getModel("announcementTypeModel");
-            const aTypeList = oAnnouncementTypeModel.getProperty("/types") || [];
-            const aSelectedTypes = aAnnouncementTypeKeys
-                .map(key => aTypeList.find(t => t.key === key)?.text)
-                .filter(Boolean);
-            const sAnnouncementType = aSelectedTypes.join(",");
+        //     const sPublishOption = oWizardModel.getProperty("/publishOption");
+        //     let startAnnouncement = null;
+        //     let endAnnouncement = null;
 
-            // Only get publish dates if Publish Now is selected
-            const sPublishOption = oWizardModel.getProperty("/publishOption");
-            let startAnnouncement = null;
-            let endAnnouncement = null;
+        //     if (sPublishOption === "PUBLISH") {
+        //         const sEndDate = oWizardModel.getProperty("/publishEndDate");
+        //         if (sEndDate) {
+        //             startAnnouncement = new Date().toISOString();
+        //             const oEndDate = new Date(sEndDate);
+        //             oEndDate.setDate(oEndDate.getDate() + 1);
+        //             endAnnouncement = oEndDate.toISOString();
+        //         }
+        //     }
 
-            if (sPublishOption === "PUBLISH") {
-                const sEndDate = oWizardModel.getProperty("/publishEndDate");
-                if (sEndDate) {
-                    startAnnouncement = new Date().toISOString();
-                    const oEndDate = new Date(sEndDate);
-                    oEndDate.setDate(oEndDate.getDate() + 1);
-                    endAnnouncement = oEndDate.toISOString();
-                }
-            }
+        //     const oPayload = {
+        //         data: [{
+        //             title: sTitle,
+        //             description: sDescription,
+        //             announcementType: sAnnouncementType,
+        //             announcementStatus: "DRAFT",
+        //             startAnnouncement: startAnnouncement,
+        //             endAnnouncement: endAnnouncement,
+        //             publishedBy: null,
+        //             toTypes: aTypeIds.map(typeId => ({
+        //                 type: { typeId: typeId }
+        //             }))
+        //         }]
+        //     };
 
-            const oPayload = {
-                data: [{
-                    title: sTitle,
-                    description: sDescription,
-                    announcementType: sAnnouncementType,
-                    isRead: false,
-                    announcementStatus: "DRAFT",
-                    startAnnouncement: startAnnouncement,
-                    endAnnouncement: endAnnouncement,
-                    publishedBy: null,
-                    publishedAt: null,
-                    toTypes: aTypeIds.map(typeId => ({
-                        type: { typeId: typeId }
-                    }))
-                }]
-            };
+        //     const oBusy = new sap.m.BusyDialog({ text: "Saving as draft..." });
+        //     oBusy.open();
 
-            const oBusy = new sap.m.BusyDialog({ text: "Saving as draft..." });
-            oBusy.open();
+        //     const oAnnouncementModel = this.getOwnerComponent().getModel("announcementModel");
 
-            $.ajax({
-                url: "/JnJ_Workzone_Portal_Destination_Java/odata/v4/AnnouncementService/bulkCreateAnnouncements",
-                method: "POST",
-                contentType: "application/json",
-                dataType: "json",
-                data: JSON.stringify(oPayload),
-                success: (oResponse) => {
-                    oBusy.close();
-                    this._oWizardDialog.close();
-                    sap.m.MessageToast.show("Announcement saved as draft successfully!");
-                    this._fetchAnnouncements();
-                },
-                error: (xhr, status, err) => {
-                    oBusy.close();
-                    console.error("Save as draft failed:", status, err);
-                    sap.m.MessageBox.error("Failed to save as draft.");
-                }
-            });
-        },
+        //     oAnnouncementModel.callFunction("/bulkCreateAnnouncements", {
+        //         method: "POST",
+        //         urlParameters: oPayload,
+        //         success: (oData) => {
+        //             oBusy.close();
+        //             this._oWizardDialog.close();
+        //             sap.m.MessageToast.show("Announcement saved as draft successfully!");
+        //             this.refreshSmartTable();
+        //         },
+        //         error: (oError) => {
+        //             oBusy.close();
+        //             console.error("Save as draft failed:", oError);
+        //             sap.m.MessageBox.error("Failed to save as draft.");
+        //         }
+        //     });
+        // },
         _validatePublishOptions: function () {
             const oWizardModel = this.getView().getModel("wizardModel");
             const sCurrentFlow = oWizardModel.getProperty("/currentFlow");
@@ -2504,129 +2668,139 @@ sap.ui.define([
         },
 
         _handleSingleSubmit: function () {
-            const oWizardModel = this.getView().getModel("wizardModel");
-            const oCategoryModel = this.getView().getModel("categoryModel");
+            const oView = this.getView();
+            const oWizardModel = oView.getModel("wizardModel");
 
             const sTitle = (oWizardModel.getProperty("/title") || "").trim();
             const sDescriptionHTML = (oWizardModel.getProperty("/description") || "").trim();
             const aAnnouncementTypeKeys = oWizardModel.getProperty("/announcementType") || [];
             const aTypeIds = oWizardModel.getProperty("/category") || [];
-
-            // Get publish option and dates
             const sPublishOption = oWizardModel.getProperty("/publishOption");
             const sStartDate = oWizardModel.getProperty("/publishStartDate");
             const sEndDate = oWizardModel.getProperty("/publishEndDate");
 
-            if (!sTitle || !sDescriptionHTML || aAnnouncementTypeKeys.length === 0 || aTypeIds.length === 0) {
+            if (!sTitle || !sDescriptionHTML || !aAnnouncementTypeKeys.length || !aTypeIds.length) {
                 sap.m.MessageToast.show("Please fill in all required fields");
-                return; F
+                return;
             }
 
             const sDescription = this._stripHtmlTags(sDescriptionHTML);
 
-            const oAnnouncementTypeModel = this.getView().getModel("announcementTypeModel");
+            const oAnnouncementTypeModel = oView.getModel("announcementTypeModel");
             const aTypeList = oAnnouncementTypeModel.getProperty("/types") || [];
 
-            const aSelectedTypes = aAnnouncementTypeKeys
+            const sAnnouncementType = aAnnouncementTypeKeys
                 .map(key => aTypeList.find(t => t.key === key)?.text)
-                .filter(Boolean);
+                .filter(Boolean)
+                .join(",");
 
-            const sAnnouncementType = aSelectedTypes.join(",");
+            this.getCurrentUserEmail().then((sUserEmail) => {
 
-            this.getCurrentUserEmail()
-                .then((sUserEmail) => {
-                    // Determine announcement status and dates
-                    let announcementStatus, startAnnouncement, endAnnouncement, publishStatus;
-                    const currentDateTime = new Date().toISOString();
+                let announcementStatus, startAnnouncement, endAnnouncement;
+                const nowISO = new Date().toISOString();
 
-                    if (sPublishOption === "PUBLISH") {
-                        // Publish Now
-                        announcementStatus = "PUBLISHED";
-                        publishStatus = "PUBLISH_NOW";
-                        startAnnouncement = currentDateTime;
-                        // Add 1 day to end date to include the full day
-                        const oEndDate = new Date(sEndDate);
-                        oEndDate.setDate(oEndDate.getDate() + 1);
-                        endAnnouncement = oEndDate.toISOString();
-                    } else {
-                        // Publish Later
-                        announcementStatus = "TO_BE_PUBLISHED";
-                        publishStatus = "PUBLISH_LATER";
-                        startAnnouncement = new Date(sStartDate).toISOString();
-                        // Add 1 day to end date to include the full day
-                        const oEndDate = new Date(sEndDate);
-                        oEndDate.setDate(oEndDate.getDate() + 1);
-                        endAnnouncement = oEndDate.toISOString();
-                    }
+                if (sPublishOption === "PUBLISH") {
+                    announcementStatus = "PUBLISHED";
+                    startAnnouncement = nowISO;
+                } else {
+                    announcementStatus = "TO_BE_PUBLISHED";
+                    startAnnouncement = new Date(sStartDate).toISOString();
+                }
 
-                    const oPayload = {
-                        data: [
-                            {
-                                title: sTitle,
-                                description: sDescription,
-                                announcementType: sAnnouncementType,
-                                isRead: false,
-                                startAnnouncement: startAnnouncement,
-                                endAnnouncement: endAnnouncement,
-                                publishStatus: publishStatus,
-                                announcementStatus: announcementStatus,
-                                publishedBy: sUserEmail,
-                                publishedAt: currentDateTime,
-                                toTypes: aTypeIds.map(typeId => ({
-                                    type: { typeId: typeId }
-                                }))
-                            }
-                        ]
-                    };
+                const oEndDate = new Date(sEndDate);
+                oEndDate.setDate(oEndDate.getDate() + 1);
+                endAnnouncement = oEndDate.toISOString();
 
-                    const oBusy = new sap.m.BusyDialog({ text: "Creating announcement..." });
-                    oBusy.open();
+                const oPayload = {
+                    data: [{
+                        title: sTitle,
+                        description: sDescription,
+                        announcementType: sAnnouncementType,
+                        announcementStatus: announcementStatus,
+                        startAnnouncement: startAnnouncement,
+                        endAnnouncement: endAnnouncement,
+                        publishedBy: sUserEmail,
+                        toTypes: aTypeIds.map(typeId => ({
+                            type: { typeId }
+                        }))
+                    }]
+                };
 
-                    $.ajax({
-                        url: "/JnJ_Workzone_Portal_Destination_Java/odata/v4/AnnouncementService/bulkCreateAnnouncements",
-                        method: "POST",
-                        contentType: "application/json",
-                        dataType: "json",
-                        data: JSON.stringify(oPayload),
+                const oBusy = new sap.m.BusyDialog({ text: "Creating announcement..." });
+                oBusy.open();
 
-                        success: (oResponse) => {
-                            oBusy.close();
-                            this._oWizardDialog.close();
+                const oModel = this.getOwnerComponent().getModel("announcementModel");
 
-                            const sMessage = announcementStatus === "PUBLISHED"
-                                ? `Announcement '${sTitle}' published successfully!`
-                                : `Announcement '${sTitle}' scheduled for publication!`;
+                // Intercept before request is sent to modify it
+                const fnBeforeRequestSent = function (oEvent) {
+                    const oRequest = oEvent.getParameter("request");
+                    const sUrl = oRequest.requestUri || oRequest.url;
 
-                            sap.m.MessageToast.show(sMessage);
-                            this._fetchAnnouncements();
-                        },
-                        error: (xhr, status, err) => {
-                            oBusy.close();
-                            console.error("Create announcement failed:", status, err);
-                            let sErrorMessage = "Failed to create announcement. Please try again.";
-                            if (xhr.responseJSON?.error?.message) {
-                                sErrorMessage = xhr.responseJSON.error.message;
-                            }
-                            sap.m.MessageBox.error(sErrorMessage);
+                    if (sUrl && sUrl.includes("bulkCreateAnnouncements")) {
+                        // Remove query parameters from URL
+                        if (oRequest.requestUri) {
+                            oRequest.requestUri = oRequest.requestUri.split('?')[0];
                         }
-                    });
-                })
-                .catch((err) => {
-                    sap.m.MessageBox.error("Failed to get current user: " + err.message);
+                        if (oRequest.url) {
+                            oRequest.url = oRequest.url.split('?')[0];
+                        }
+
+                        // Set the payload as request body
+                        oRequest.data = JSON.stringify(oPayload);
+
+                        // Ensure correct headers
+                        oRequest.headers = oRequest.headers || {};
+                        oRequest.headers["Content-Type"] = "application/json";
+                        oRequest.headers["Accept"] = "application/json";
+                    }
+                };
+
+                // Attach the interceptor
+                oModel.attachRequestSent(fnBeforeRequestSent);
+
+                // Call the function without urlParameters
+                oModel.callFunction("/bulkCreateAnnouncements", {
+                    method: "POST",
+                    success: (oData) => {
+                        oBusy.close();
+                        oModel.detachRequestSent(fnBeforeRequestSent);
+                        this._oWizardDialog.close();
+
+                        const oResult = oData?.bulkCreateAnnouncements;
+
+                        sap.m.MessageToast.show(
+                            oResult?.message || "Announcement created successfully"
+                        );
+
+                        this.refreshSmartTable();
+                    },
+                    error: (oError) => {
+                        oBusy.close();
+                        oModel.detachRequestSent(fnBeforeRequestSent);
+
+                        let sMessage = "Failed to create announcement";
+                        try {
+                            const oErr = JSON.parse(oError.responseText);
+                            sMessage = oErr?.error?.message?.value || sMessage;
+                        } catch (e) { /* ignore */ }
+
+                        sap.m.MessageBox.error(sMessage);
+                    }
                 });
+
+            }).catch((err) => {
+                sap.m.MessageBox.error("Failed to get current user: " + err.message);
+            });
         },
 
         _handleEditSubmit: function () {
             const oWizardModel = this.getView().getModel("wizardModel");
-            const oCategoryModel = this.getView().getModel("categoryModel");
-
             const sTitle = (oWizardModel.getProperty("/title") || "").trim();
             const aAnnouncementTypeKeys = oWizardModel.getProperty("/announcementType") || [];
             const aCategories = oWizardModel.getProperty("/category") || [];
             const sDescriptionHTML = (oWizardModel.getProperty("/description") || "").trim();
             const sEditId = oWizardModel.getProperty("/editId");
 
-            // Get publish option and dates
             const sPublishOption = oWizardModel.getProperty("/publishOption");
             const sStartDate = oWizardModel.getProperty("/publishStartDate");
             const sEndDate = oWizardModel.getProperty("/publishEndDate");
@@ -2637,105 +2811,103 @@ sap.ui.define([
             }
 
             const sDescription = this._stripHtmlTags(sDescriptionHTML);
-
             const oAnnouncementTypeModel = this.getView().getModel("announcementTypeModel");
             const aTypeList = oAnnouncementTypeModel.getProperty("/types") || [];
-
             const aSelectedTypes = aAnnouncementTypeKeys
                 .map(key => aTypeList.find(t => t.key === key)?.text)
                 .filter(Boolean);
-
             const sAnnouncementType = aSelectedTypes.join(",");
 
-            const oBusyDialog = new sap.m.BusyDialog({ text: "Updating announcement..." });
-            oBusyDialog.open();
+            const oBusy = new sap.m.BusyDialog({ text: "Updating announcement..." });
+            oBusy.open();
 
             this.getCurrentUserEmail()
                 .then((sUserEmail) => {
-                    // Determine announcement status and dates
-                    let announcementStatus, startAnnouncement, endAnnouncement, publishStatus;
+                    let announcementStatus, startAnnouncement, endAnnouncement;
                     const currentDateTime = new Date().toISOString();
 
                     if (sPublishOption === "PUBLISH") {
-                        // Publish Now
                         announcementStatus = "PUBLISHED";
-                        publishStatus = "PUBLISH_NOW";
                         startAnnouncement = currentDateTime;
-                        // Add 1 day to end date to include the full day
                         const oEndDate = new Date(sEndDate);
                         oEndDate.setDate(oEndDate.getDate() + 1);
                         endAnnouncement = oEndDate.toISOString();
                     } else {
-                        // Publish Later
                         announcementStatus = "TO_BE_PUBLISHED";
-                        publishStatus = "PUBLISH_LATER";
                         startAnnouncement = new Date(sStartDate).toISOString();
-                        // Add 1 day to end date to include the full day
                         const oEndDate = new Date(sEndDate);
                         oEndDate.setDate(oEndDate.getDate() + 1);
                         endAnnouncement = oEndDate.toISOString();
                     }
 
                     const oPayload = {
-                        data: {
-                            announcementId: sEditId,
-                            title: sTitle,
-                            description: sDescription,
-                            announcementType: sAnnouncementType,
-                            isRead: false,
-                            startAnnouncement: startAnnouncement,
-                            endAnnouncement: endAnnouncement,
-                            publishStatus: publishStatus,
-                            announcementStatus: announcementStatus,
-                            publishedBy: sUserEmail,
-                            publishedAt: currentDateTime,
-                            toTypes: aCategories.map(typeId => ({
-                                type: { typeId: typeId }
-                            }))
-                        }
+                        title: sTitle,
+                        description: sDescription,
+                        announcementType: sAnnouncementType,
+                        announcementStatus: announcementStatus,
+                        startAnnouncement: startAnnouncement,
+                        endAnnouncement: endAnnouncement,
+                        publishedBy: sUserEmail,
+                        toTypes: aCategories.map(typeId => ({
+                            type: { typeId: typeId }
+                        }))
                     };
 
-                    const sUrl = `/JnJ_Workzone_Portal_Destination_Java/odata/v4/AnnouncementService/updateAnnouncement`;
+                    // Fetch CSRF token first
+                    this._getCSRFToken()
+                        .then((csrfToken) => {
+                            $.ajax({
+                                url: `/JnJ_Workzone_Portal_Destination_Node/odata/v2/announcement/Announcements('${sEditId}')`,
+                                method: "PATCH",
+                                contentType: "application/json",
+                                dataType: "json",
+                                headers: {
+                                    "X-CSRF-Token": csrfToken  //Include CSRF token
+                                },
+                                data: JSON.stringify(oPayload),
+                                success: (oResponse) => {
+                                    oBusy.close();
 
-                    $.ajax({
-                        url: sUrl,
-                        method: "POST",
-                        contentType: "application/json",
-                        dataType: "json",
-                        data: JSON.stringify(oPayload),
+                                    const oWizard = this.byId("singleWizard");
+                                    if (oWizard) {
+                                        oWizard.removeStyleClass("hideFirstWizardStep");
+                                    }
 
-                        success: (oResponse) => {
-                            oBusyDialog.close();
+                                    this._editContext = null;
+                                    this._oWizardDialog.close();
 
-                            const oWizard = this.byId("singleWizard");
-                            if (oWizard) {
-                                oWizard.removeStyleClass("hideFirstWizardStep");
-                            }
+                                    const sMessage = announcementStatus === "PUBLISHED"
+                                        ? `Announcement '${sTitle}' updated and published successfully!`
+                                        : `Announcement '${sTitle}' updated and scheduled for publication!`;
 
-                            this._editContext = null;
-                            this._oWizardDialog.close();
+                                    sap.m.MessageToast.show(sMessage);
 
-                            const sMessage = announcementStatus === "PUBLISHED"
-                                ? `Announcement '${sTitle}' updated and published successfully!`
-                                : `Announcement '${sTitle}' updated and scheduled for publication!`;
-
-                            sap.m.MessageToast.show(sMessage);
-                            this._fetchAnnouncements();
-                        },
-                        error: (xhr, status, err) => {
-                            oBusyDialog.close();
-                            console.error("Failed to update announcement:", status, err);
-                            let sErrorMessage = "Failed to update announcement. Please try again.";
-                            if (xhr.responseJSON?.error?.message) {
-                                sErrorMessage = xhr.responseJSON.error.message;
-                            }
-                            sap.m.MessageBox.error(sErrorMessage);
-                        }
-                    });
+                                    //  Add delay before refresh
+                                    setTimeout(() => {
+                                        this.refreshSmartTable();
+                                    }, 500);
+                                },
+                                error: (xhr, status, err) => {
+                                    oBusy.close();
+                                    console.error("Update announcement failed:", status, err);
+                                    console.error("Response:", xhr.responseText);
+                                    let sErrorMessage = "Failed to update announcement. Please try again.";
+                                    if (xhr.responseJSON?.error?.message) {
+                                        sErrorMessage = xhr.responseJSON.error.message;
+                                    }
+                                    sap.m.MessageBox.error(sErrorMessage);
+                                }
+                            });
+                        })
+                        .catch((err) => {
+                            oBusy.close();
+                            console.error("CSRF token fetch failed:", err);
+                            sap.m.MessageBox.error("Failed to initialize request. Please try again.");
+                        });
                 })
-                .catch((err) => {
-                    oBusyDialog.close();
-                    sap.m.MessageBox.error("Failed to get current user: " + err.message);
+                .catch((error) => {
+                    oBusy.close();
+                    sap.m.MessageBox.error("Failed to get current user: " + error.message);
                 });
         },
 
@@ -2749,9 +2921,7 @@ sap.ui.define([
                 return;
             }
 
-            // Validate all rows in the table
             const validationResult = this._validateBulkTableData(bulkData);
-
             if (!validationResult.isValid) {
                 this._showBulkValidationErrorDialog(validationResult.errors);
                 return;
@@ -2805,26 +2975,20 @@ sap.ui.define([
                             return;
                         }
 
-                        // Determine publish status based on start date
                         const oStartDate = new Date(item.startDate);
                         oStartDate.setHours(0, 0, 0, 0);
 
-                        let publishStatus, announcementStatus, startAnnouncement, endAnnouncement;
+                        let announcementStatus, startAnnouncement, endAnnouncement;
                         const currentDateTime = new Date().toISOString();
 
                         if (oStartDate.getTime() === oToday.getTime()) {
-                            // Start date is today - PUBLISH NOW
-                            publishStatus = "PUBLISH_NOW";
                             announcementStatus = "PUBLISHED";
                             startAnnouncement = currentDateTime;
                         } else {
-                            // Start date is in future - PUBLISH LATER
-                            publishStatus = "PUBLISH_LATER";
                             announcementStatus = "TO_BE_PUBLISHED";
                             startAnnouncement = new Date(item.startDate).toISOString();
                         }
 
-                        // Add 1 day to end date to include the full day
                         const oEndDate = new Date(item.endDate);
                         oEndDate.setDate(oEndDate.getDate() + 1);
                         endAnnouncement = oEndDate.toISOString();
@@ -2833,13 +2997,10 @@ sap.ui.define([
                             title: item.title.trim(),
                             description: item.description.trim(),
                             announcementType: sAnnouncementType,
-                            isRead: false,
                             announcementStatus: announcementStatus,
-                            publishStatus: publishStatus,
                             startAnnouncement: startAnnouncement,
                             endAnnouncement: endAnnouncement,
                             publishedBy: sUserEmail,
-                            publishedAt: currentDateTime,
                             toTypes: aTypeIds.map(typeId => ({
                                 type: { typeId: typeId }
                             }))
@@ -2855,57 +3016,73 @@ sap.ui.define([
                         return;
                     }
 
-                    const oBusyDialog = new sap.m.BusyDialog({
+                    const oBusy = new sap.m.BusyDialog({
                         text: `Publishing ${aPayloads.length} announcement(s)...`
                     });
-                    oBusyDialog.open();
+                    oBusy.open();
 
                     const oPayload = {
                         data: aPayloads
                     };
 
-                    $.ajax({
-                        url: "/JnJ_Workzone_Portal_Destination_Java/odata/v4/AnnouncementService/bulkCreateAnnouncements",
-                        method: "POST",
-                        contentType: "application/json",
-                        dataType: "json",
-                        data: JSON.stringify(oPayload),
-                        success: (oResponse) => {
-                            oBusyDialog.close();
+                    // Fetch CSRF token first
+                    this._getCSRFToken()
+                        .then((csrfToken) => {
+                            $.ajax({
+                                url: "/JnJ_Workzone_Portal_Destination_Node/odata/v2/announcement/bulkCreateAnnouncements",
+                                method: "POST",
+                                contentType: "application/json",
+                                dataType: "json",
+                                headers: {
+                                    "X-CSRF-Token": csrfToken  // Include CSRF token
+                                },
+                                data: JSON.stringify(oPayload),
+                                success: (oResponse) => {
+                                    oBusy.close();
 
-                            const publishedCount = aPayloads.filter(p => p.announcementStatus === "PUBLISHED").length;
-                            const scheduledCount = aPayloads.filter(p => p.announcementStatus === "TO_BE_PUBLISHED").length;
+                                    const publishedCount = aPayloads.filter(p => p.announcementStatus === "PUBLISHED").length;
+                                    const scheduledCount = aPayloads.filter(p => p.announcementStatus === "TO_BE_PUBLISHED").length;
 
-                            let sMessage = `Bulk upload successful! `;
-                            if (publishedCount > 0) {
-                                sMessage += `${publishedCount} announcement(s) published`;
-                            }
-                            if (scheduledCount > 0) {
-                                if (publishedCount > 0) sMessage += `, `;
-                                sMessage += `${scheduledCount} announcement(s) scheduled`;
-                            }
+                                    let sMessage = `Bulk upload successful! `;
+                                    if (publishedCount > 0) {
+                                        sMessage += `${publishedCount} announcement(s) published`;
+                                    }
+                                    if (scheduledCount > 0) {
+                                        if (publishedCount > 0) sMessage += `, `;
+                                        sMessage += `${scheduledCount} announcement(s) scheduled`;
+                                    }
 
-                            sap.m.MessageToast.show(sMessage);
-                            this._oWizardDialog.close();
-                            this._fetchAnnouncements();
-                        },
-                        error: (xhr, status, err) => {
-                            oBusyDialog.close();
-                            console.error("Bulk upload failed:", status, err);
+                                    sap.m.MessageToast.show(sMessage);
+                                    this._oWizardDialog.close();
 
-                            let sErrorMessage = "Bulk upload failed. Please check the data and try again.";
-                            if (xhr.responseJSON?.error?.message) {
-                                sErrorMessage = xhr.responseJSON.error.message;
-                            }
-
-                            sap.m.MessageBox.error(sErrorMessage);
-                        }
-                    });
+                                    // Add delay before refresh
+                                    setTimeout(() => {
+                                        this.refreshSmartTable();
+                                    }, 500);
+                                },
+                                error: (xhr, status, err) => {
+                                    oBusy.close();
+                                    console.error("Bulk upload failed:", status, err);
+                                    console.error("Response:", xhr.responseText);
+                                    let sErrorMessage = "Bulk upload failed. Please check the data and try again.";
+                                    if (xhr.responseJSON?.error?.message) {
+                                        sErrorMessage = xhr.responseJSON.error.message;
+                                    }
+                                    sap.m.MessageBox.error(sErrorMessage);
+                                }
+                            });
+                        })
+                        .catch((err) => {
+                            oBusy.close();
+                            console.error("CSRF token fetch failed:", err);
+                            sap.m.MessageBox.error("Failed to initialize request. Please try again.");
+                        });
                 })
                 .catch((error) => {
                     sap.m.MessageBox.error("Failed to get current user: " + error.message);
                 });
         },
+
 
         _validateBulkTableData: function (bulkData) {
             const errors = [];
@@ -3109,10 +3286,19 @@ sap.ui.define([
          * ======================================== */
 
         onDeletePress: function (oEvent) {
-            const oBindingContext = oEvent.getSource().getBindingContext();
-            const oData = oBindingContext.getObject();
+            const oButton = oEvent.getSource();
 
-            const sAnnouncementId = oData.id;
+            const oListItem = oButton.getParent().getParent();
+            // const oBindingContext = oEvent.getSource().getBindingContext("announcementModel");
+            const oBindingContext = oListItem.getBindingContext();
+
+            if (!oBindingContext) {
+                MessageBox.error("Unable to get announcement data. Please refresh and try again.");
+                return;
+            }
+
+            const oData = oBindingContext.getObject();
+            const sAnnouncementId = oData.announcementId;
             const sTitle = oData.title;
 
             if (!sAnnouncementId) {
@@ -3133,42 +3319,46 @@ sap.ui.define([
         },
 
         _deleteItem: function (sAnnouncementId, sTitle) {
-            const oBusyDialog = new sap.m.BusyDialog({
-                text: "Deleting announcement..."
-            });
-            oBusyDialog.open();
+            const oBusy = new sap.m.BusyDialog({ text: "Deleting announcement..." });
+            oBusy.open();
 
-            const sUrl = `/JnJ_Workzone_Portal_Destination_Java/odata/v4/AnnouncementService/Announcements(announcementId=${sAnnouncementId})`;
+            // Fetch CSRF token first
+            this._getCSRFToken()
+                .then((csrfToken) => {
+                    $.ajax({
+                        url: `/JnJ_Workzone_Portal_Destination_Node/odata/v2/announcement/Announcements('${sAnnouncementId}')`,
+                        method: "DELETE",
+                        contentType: "application/json",
+                        dataType: "json",
+                        headers: {
+                            "X-CSRF-Token": csrfToken  // Include CSRF token
+                        },
+                        success: (oResponse) => {
+                            oBusy.close();
+                            sap.m.MessageToast.show(`Announcement '${sTitle}' deleted successfully!`);
 
-            $.ajax({
-                url: sUrl,
-                method: "DELETE",
-                success: () => {
-                    oBusyDialog.close();
-
-                    const oModel = this.getView().getModel();
-                    const aAnnouncements = oModel.getProperty("/announcements") || [];
-                    const iIndex = aAnnouncements.findIndex(item => item.id === sAnnouncementId);
-
-                    if (iIndex !== -1) {
-                        aAnnouncements.splice(iIndex, 1);
-                        oModel.setProperty("/announcements", aAnnouncements);
-                    }
-
-                    MessageToast.show(`Announcement '${sTitle}' deleted successfully!`);
-                },
-                error: (xhr, status, err) => {
-                    oBusyDialog.close();
-                    console.error("Failed to delete announcement:", status, err);
-
-                    let sErrorMessage = "Failed to delete announcement. Please try again.";
-                    if (xhr.responseJSON && xhr.responseJSON.error && xhr.responseJSON.error.message) {
-                        sErrorMessage = xhr.responseJSON.error.message;
-                    }
-
-                    MessageBox.error(sErrorMessage);
-                }
-            });
+                            // Add delay before refresh
+                            setTimeout(() => {
+                                this.refreshSmartTable();
+                            }, 500);
+                        },
+                        error: (xhr, status, err) => {
+                            oBusy.close();
+                            console.error("Delete announcement failed:", status, err);
+                            console.error("Response:", xhr.responseText);
+                            let sErrorMessage = "Failed to delete announcement. Please try again.";
+                            if (xhr.responseJSON?.error?.message) {
+                                sErrorMessage = xhr.responseJSON.error.message;
+                            }
+                            sap.m.MessageBox.error(sErrorMessage);
+                        }
+                    });
+                })
+                .catch((err) => {
+                    oBusy.close();
+                    console.error("CSRF token fetch failed:", err);
+                    sap.m.MessageBox.error("Failed to initialize request. Please try again.");
+                });
         },
 
         /* ========================================
@@ -3219,7 +3409,8 @@ sap.ui.define([
         },
 
         refreshTable: function () {
-            this._fetchAnnouncements();
+            // this._fetchAnnouncements();
+            this.refreshSmartTable();
             const oTable = this.byId("announcementsTable");
             if (oTable) {
                 oTable.getBinding("items").refresh();

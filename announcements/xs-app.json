@@ -3,6 +3,13 @@
   "authenticationMethod": "route",
   "routes": [
     {
+      "source": "^/JnJ_Workzone_Portal_Destination_Node/(.*)$",
+      "target": "$1",
+      "destination": "JnJ_Workzone_Portal_Destination_Node",
+      "authenticationType": "xsuaa",
+      "csrfProtection": true
+    },
+    {
       "source": "^/user-api/currentUser$",
       "target": "/currentUser",
       "service": "sap-approuter-userapi"
