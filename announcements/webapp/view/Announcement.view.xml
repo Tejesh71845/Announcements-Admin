@@ -24,13 +24,13 @@
                 beforeRebindTable="onBeforeRebindTable"
                 enableAutoColumnWidth="true"
                 placeToolbarInTable="true"
+                requestAtLeastFields="description,announcementStatus,announcementType"
             >
-        
                 <smartTable:customToolbar>
                     <OverflowToolbar design="Transparent">
                         <ToolbarSpacer />
                         <Button
-                            text="Create"
+                            text="Create Announcement"
                             type="Emphasized"
                             icon="sap-icon://add"
                             press="onCreatePress"
@@ -55,6 +55,36 @@
                 >
                     <columns>
                         <Column>
+                            <Text text="Created On" />
+                            <customData>
+                                <core:CustomData
+                                    key="p13nData"
+                                    value="{'columnKey': 'createdAt', 'columnIndex': '2', 'leadingProperty': 'createdAt'}"
+                                />
+                            </customData>
+                        </Column>
+
+                        <Column>
+                            <Text text="Modified On" />
+                            <customData>
+                                <core:CustomData
+                                    key="p13nData"
+                                    value="{'columnKey': 'modifiedAt', 'columnIndex': '3', 'leadingProperty': 'modifiedAt'}"
+                                />
+                            </customData>
+                        </Column>
+
+                        <Column>
+                            <Text text="Published On" />
+                            <customData>
+                                <core:CustomData
+                                    key="p13nData"
+                                    value="{'columnKey': 'publishedAt', 'columnIndex': '4', 'leadingProperty': 'publishedAt'}"
+                                />
+                            </customData>
+                        </Column>
+
+                        <Column>
                             <Text text="Actions" />
                             <customData>
                                 <core:CustomData
@@ -67,6 +97,27 @@
                     <items>
                         <ColumnListItem type="Active">
                             <cells>
+                                <Text
+                                    text="{
+                                            path: 'createdAt',
+                                            formatter: '.formatDateOnly'
+                                        }"
+                                />
+
+                                <Text
+                                    text="{
+                                            path: 'modifiedAt',
+                                            formatter: '.formatDateOnly'
+                                        }"
+                                />
+
+                                <Text
+                                    text="{
+                                            path: 'publishedAt',
+                                            formatter: '.formatDateOnly'
+                                        }"
+                                />
+
                                 <HBox justifyContent="Center">
                                     <Button
                                         icon="sap-icon://edit"

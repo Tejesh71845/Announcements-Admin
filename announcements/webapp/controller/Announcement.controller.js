@@ -374,6 +374,7 @@ sap.ui.define([
                 }).filter(Boolean);
             }
 
+            // **FIX: Properly determine if publish data exists**
             const bHasPublishData = !!(oEditData.publishStatus && oEditData.endAnnouncement);
 
             const oWizardData = {
@@ -391,12 +392,17 @@ sap.ui.define([
                 createdOnFormatted: oEditData.createdOn
                     ? this.formatUSDateTime(oEditData.createdOn)
                     : this.formatUSDateTime(new Date()),
+
+                // **FIX: Properly set publish option based on publishStatus**
                 publishOption: oEditData.publishStatus === "PUBLISH_NOW" ? "PUBLISH" :
                     oEditData.publishStatus === "PUBLISH_LATER" ? "UNPUBLISH" : "",
+
+                // **FIX: Format dates correctly for DatePicker**
                 publishStartDate: oEditData.startAnnouncement ?
                     this._formatDateToValue(new Date(oEditData.startAnnouncement)) : "",
                 publishEndDate: oEditData.endAnnouncement ?
                     this._formatDateToValue(new Date(oEditData.endAnnouncement)) : "",
+
                 showDatePickers: bHasPublishData,
                 startDateEnabled: oEditData.publishStatus === "PUBLISH_LATER",
                 endDateEnabled: bHasPublishData,
@@ -404,13 +410,14 @@ sap.ui.define([
                 publishEnabled: bHasPublishData,
                 cancelEnabled: true,
 
-                // Store original publish data for comparison
+                // **FIX: Store original publish data for comparison**
                 originalPublishOption: oEditData.publishStatus === "PUBLISH_NOW" ? "PUBLISH" :
                     oEditData.publishStatus === "PUBLISH_LATER" ? "UNPUBLISH" : "",
                 originalPublishStartDate: oEditData.startAnnouncement ?
                     this._formatDateToValue(new Date(oEditData.startAnnouncement)) : "",
                 originalPublishEndDate: oEditData.endAnnouncement ?
                     this._formatDateToValue(new Date(oEditData.endAnnouncement)) : "",
+
                 isEditMode: true,
                 editId: oEditData.id,
                 showSingleWizard: true,
@@ -837,8 +844,8 @@ sap.ui.define([
                     }
                 );
             } else {
-                // Single flow validation
-                if (!this._validateMandatoryFields()) {
+                // **FIX: Validate all fields and show errors**
+                if (!this._validateAllFieldsWithErrors()) {
                     MessageToast.show("Please complete all required fields");
                     return;
                 }
@@ -866,6 +873,65 @@ sap.ui.define([
                     }
                 });
             }
+        },
+
+        _validateAllFieldsWithErrors: function () {
+            const oWizardModel = this.getView().getModel("wizardModel");
+            const sTitle = (oWizardModel.getProperty("/title") || "").trim();
+            const aAnnouncementType = oWizardModel.getProperty("/announcementType") || [];
+            const aCategory = oWizardModel.getProperty("/category") || [];
+            const sDescriptionHTML = (oWizardModel.getProperty("/description") || "").trim();
+            const sPlainText = sDescriptionHTML.replace(/<[^>]*>/g, "").trim();
+
+            let bValid = true;
+
+            // Validate Title
+            if (!sTitle) {
+                this._setValidationState(oWizardModel, "title", false, "Title is required");
+                bValid = false;
+            } else {
+                this._setValidationState(oWizardModel, "title", true, "");
+            }
+
+            // Validate Announcement Type
+            if (aAnnouncementType.length === 0) {
+                this._setValidationState(oWizardModel, "announcementType", false, "At least one announcement type is required");
+                bValid = false;
+            } else {
+                this._setValidationState(oWizardModel, "announcementType", true, "");
+            }
+
+            // Validate Category
+            if (aCategory.length === 0) {
+                this._setValidationState(oWizardModel, "category", false, "At least one category is required");
+                bValid = false;
+            } else {
+                this._setValidationState(oWizardModel, "category", true, "");
+            }
+
+            // Validate Description (RichTextEditor)
+            if (!sPlainText) {
+                oWizardModel.setProperty("/descriptionValueState", "Error");
+                oWizardModel.setProperty("/descriptionValueStateText", "Description is required");
+
+                // Add red border to RichTextEditor container
+                const oContainer = this.byId("richTextContainer");
+                if (oContainer) {
+                    oContainer.addStyleClass("richTextError");
+                }
+                bValid = false;
+            } else {
+                oWizardModel.setProperty("/descriptionValueState", "None");
+                oWizardModel.setProperty("/descriptionValueStateText", "");
+
+                // Remove red border
+                const oContainer = this.byId("richTextContainer");
+                if (oContainer) {
+                    oContainer.removeStyleClass("richTextError");
+                }
+            }
+
+            return bValid;
         },
 
         _validateMandatoryFields: function () {
@@ -922,12 +988,13 @@ sap.ui.define([
                     const oPayload = {
                         data: [{
                             title: sTitle,
-                            description: sDescription,
+                            description: sDescriptionHTML,
                             announcementType: sAnnouncementType,
                             announcementStatus: announcementStatus,
                             startAnnouncement: startAnnouncement,
                             endAnnouncement: endAnnouncement,
                             publishedBy: sUserEmail,
+                            publishedAt: currentDateTime,
                             toTypes: aTypeIds.map(typeId => ({
                                 type: { typeId: typeId }
                             }))
@@ -1331,12 +1398,13 @@ sap.ui.define([
             oToday.setHours(0, 0, 0, 0);
 
             if (sOption === "PUBLISH") {
-                // Publish Now: Start Date disabled, End Date enabled
-                const sTodayValue = this._formatDateToValue(oToday);
-
+                // **FIX: Format both dates in dd/MM/yyyy format for consistency**
                 const oEndDate = new Date(oToday);
                 oEndDate.setDate(oEndDate.getDate() + 7);
-                const sEndDateValue = this._formatDateToValue(oEndDate);
+
+                // Use formatDateToValue for internal value (yyyy-MM-dd)
+                const sTodayValue = formatter.formatDateToValue(oToday);
+                const sEndDateValue = formatter.formatDateToValue(oEndDate);
 
                 oWizardModel.setProperty("/startDateEnabled", false);
                 oWizardModel.setProperty("/endDateEnabled", true);
@@ -1346,42 +1414,33 @@ sap.ui.define([
                 oWizardModel.setProperty("/publishStartDateValueStateText", "");
                 oWizardModel.setProperty("/publishEndDateValueState", "None");
                 oWizardModel.setProperty("/publishEndDateValueStateText", "");
-
-
                 oWizardModel.setProperty("/minEndDate", oToday);
-
                 oWizardModel.setProperty("/draftEnabled", true);
 
-
-                // Force DatePicker to update display format
+                // Force DatePicker to update display
                 const oStartDatePicker = this.byId("publishStartDatePicker");
                 if (oStartDatePicker) {
                     oStartDatePicker.setValue(sTodayValue);
                 }
             } else {
-                // Publish Later: Both enabled, start date is tomorrow, min date is tomorrow
+                // Publish Later: Both enabled
                 const oTomorrow = new Date(oToday);
                 oTomorrow.setDate(oTomorrow.getDate() + 1);
-                const sTomorrowValue = this._formatDateToValue(oTomorrow);
-
-                // End date is tomorrow + 7 days
                 const oEndDate = new Date(oTomorrow);
                 oEndDate.setDate(oEndDate.getDate() + 7);
-                const sEndDateValue = this._formatDateToValue(oEndDate);
+
+                const sTomorrowValue = formatter.formatDateToValue(oTomorrow);
+                const sEndDateValue = formatter.formatDateToValue(oEndDate);
 
                 oWizardModel.setProperty("/startDateEnabled", true);
                 oWizardModel.setProperty("/endDateEnabled", true);
                 oWizardModel.setProperty("/publishStartDate", sTomorrowValue);
                 oWizardModel.setProperty("/publishEndDate", sEndDateValue);
-
-                // Set minimum date to tomorrow for Publish Later
                 oWizardModel.setProperty("/minPublishDate", oTomorrow);
                 oWizardModel.setProperty("/minEndDate", oTomorrow);
-
                 oWizardModel.setProperty("/draftEnabled", false);
             }
 
-            // Enable Cancel and Publish buttons
             oWizardModel.setProperty("/cancelEnabled", true);
             oWizardModel.setProperty("/publishEnabled", true);
         },
@@ -2118,44 +2177,69 @@ sap.ui.define([
                 return;
             }
 
-            const oData = oBindingContext.getObject();
+            const sPath = oBindingContext.getPath();
+            const oModel = this.getOwnerComponent().getModel("announcementModel");
 
-            console.log("Edit Data:", oData); // Debug log
-            console.log("toTypes:", oData.toTypes); // Debug log
+            if (!oModel) {
+                MessageBox.error("Model not found. Please refresh and try again.");
+                return;
+            }
 
-            // Extract typeIds with improved logic
-            const aTypeIds = this._extractTypeIds(oData.toTypes);
+            // Show busy indicator
+            const oBusy = new sap.m.BusyDialog({ text: "Loading announcement..." });
+            oBusy.open();
 
-            console.log("Extracted typeIds:", aTypeIds); // Debug log
+            // Read the announcement with expanded toTypes
+            oModel.read(sPath, {
+                urlParameters: {
+                    "$expand": "toTypes"
+                },
+                success: (oData) => {
+                    oBusy.close();
 
-            const oEditData = {
-                id: oData.announcementId,
-                title: oData.title,
-                announcementType: oData.announcementType,
-                description: oData.description,
-                createdBy: oData.createdBy,
-                createdOn: oData.createdAt,
-                modifiedBy: oData.modifiedBy,
-                modifiedOn: oData.modifiedAt,
-                publishedAt: oData.publishedAt,
-                publishedBy: oData.publishedBy,
-                announcementStatus: oData.announcementStatus,
-                publishStatus: this._determinePublishStatus(oData),
-                startAnnouncement: oData.startAnnouncement,
-                endAnnouncement: oData.endAnnouncement,
-                isActive: oData.isActive,
-                typeId: aTypeIds.length > 0 ? aTypeIds : [] // Ensure we always have an array
-            };
+                    console.log("Edit Data:", oData);
+                    console.log("toTypes:", oData.toTypes);
 
-            console.log("Final Edit Data:", oEditData); // Debug log
+                    // Extract typeIds with improved logic
+                    const aTypeIds = this._extractTypeIds(oData.toTypes);
 
-            this._editContext = {
-                data: oEditData,
-                path: oBindingContext.getPath(),
-                isEdit: true
-            };
+                    console.log("Extracted typeIds:", aTypeIds);
 
-            this._openWizardForEdit(oEditData);
+                    const oEditData = {
+                        id: oData.announcementId,
+                        title: oData.title,
+                        announcementType: oData.announcementType,
+                        description: oData.description,
+                        createdBy: oData.createdBy,
+                        createdOn: oData.createdAt,
+                        modifiedBy: oData.modifiedBy,
+                        modifiedOn: oData.modifiedAt,
+                        publishedAt: oData.publishedAt,
+                        publishedBy: oData.publishedBy,
+                        announcementStatus: oData.announcementStatus,
+                        publishStatus: this._determinePublishStatus(oData),
+                        startAnnouncement: oData.startAnnouncement,
+                        endAnnouncement: oData.endAnnouncement,
+                        isActive: oData.isActive,
+                        typeId: aTypeIds.length > 0 ? aTypeIds : []
+                    };
+
+                    console.log("Final Edit Data:", oEditData);
+
+                    this._editContext = {
+                        data: oEditData,
+                        path: sPath,
+                        isEdit: true
+                    };
+
+                    this._openWizardForEdit(oEditData);
+                },
+                error: (oError) => {
+                    oBusy.close();
+                    console.error("Failed to read announcement:", oError);
+                    MessageBox.error("Failed to load announcement data. Please try again.");
+                }
+            });
         },
 
         _extractTypeIds: function (toTypes) {
@@ -2163,8 +2247,8 @@ sap.ui.define([
                 return [];
             }
 
-            // Handle both expanded results and direct array
-            const aResults = toTypes.results || toTypes;
+            // Handle OData V2 structure with __list, results, or direct array
+            let aResults = toTypes.__list || toTypes.results || toTypes;
 
             if (!Array.isArray(aResults)) {
                 return [];
@@ -2667,131 +2751,131 @@ sap.ui.define([
             return text;
         },
 
-        _handleSingleSubmit: function () {
-            const oView = this.getView();
-            const oWizardModel = oView.getModel("wizardModel");
+        // _handleSingleSubmit: function () {
+        //     const oView = this.getView();
+        //     const oWizardModel = oView.getModel("wizardModel");
 
-            const sTitle = (oWizardModel.getProperty("/title") || "").trim();
-            const sDescriptionHTML = (oWizardModel.getProperty("/description") || "").trim();
-            const aAnnouncementTypeKeys = oWizardModel.getProperty("/announcementType") || [];
-            const aTypeIds = oWizardModel.getProperty("/category") || [];
-            const sPublishOption = oWizardModel.getProperty("/publishOption");
-            const sStartDate = oWizardModel.getProperty("/publishStartDate");
-            const sEndDate = oWizardModel.getProperty("/publishEndDate");
+        //     const sTitle = (oWizardModel.getProperty("/title") || "").trim();
+        //     const sDescriptionHTML = (oWizardModel.getProperty("/description") || "").trim();
+        //     const aAnnouncementTypeKeys = oWizardModel.getProperty("/announcementType") || [];
+        //     const aTypeIds = oWizardModel.getProperty("/category") || [];
+        //     const sPublishOption = oWizardModel.getProperty("/publishOption");
+        //     const sStartDate = oWizardModel.getProperty("/publishStartDate");
+        //     const sEndDate = oWizardModel.getProperty("/publishEndDate");
 
-            if (!sTitle || !sDescriptionHTML || !aAnnouncementTypeKeys.length || !aTypeIds.length) {
-                sap.m.MessageToast.show("Please fill in all required fields");
-                return;
-            }
+        //     if (!sTitle || !sDescriptionHTML || !aAnnouncementTypeKeys.length || !aTypeIds.length) {
+        //         sap.m.MessageToast.show("Please fill in all required fields");
+        //         return;
+        //     }
 
-            const sDescription = this._stripHtmlTags(sDescriptionHTML);
+        //     const sDescription = this._stripHtmlTags(sDescriptionHTML);
 
-            const oAnnouncementTypeModel = oView.getModel("announcementTypeModel");
-            const aTypeList = oAnnouncementTypeModel.getProperty("/types") || [];
+        //     const oAnnouncementTypeModel = oView.getModel("announcementTypeModel");
+        //     const aTypeList = oAnnouncementTypeModel.getProperty("/types") || [];
 
-            const sAnnouncementType = aAnnouncementTypeKeys
-                .map(key => aTypeList.find(t => t.key === key)?.text)
-                .filter(Boolean)
-                .join(",");
+        //     const sAnnouncementType = aAnnouncementTypeKeys
+        //         .map(key => aTypeList.find(t => t.key === key)?.text)
+        //         .filter(Boolean)
+        //         .join(",");
 
-            this.getCurrentUserEmail().then((sUserEmail) => {
+        //     this.getCurrentUserEmail().then((sUserEmail) => {
 
-                let announcementStatus, startAnnouncement, endAnnouncement;
-                const nowISO = new Date().toISOString();
+        //         let announcementStatus, startAnnouncement, endAnnouncement;
+        //         const nowISO = new Date().toISOString();
 
-                if (sPublishOption === "PUBLISH") {
-                    announcementStatus = "PUBLISHED";
-                    startAnnouncement = nowISO;
-                } else {
-                    announcementStatus = "TO_BE_PUBLISHED";
-                    startAnnouncement = new Date(sStartDate).toISOString();
-                }
+        //         if (sPublishOption === "PUBLISH") {
+        //             announcementStatus = "PUBLISHED";
+        //             startAnnouncement = nowISO;
+        //         } else {
+        //             announcementStatus = "TO_BE_PUBLISHED";
+        //             startAnnouncement = new Date(sStartDate).toISOString();
+        //         }
 
-                const oEndDate = new Date(sEndDate);
-                oEndDate.setDate(oEndDate.getDate() + 1);
-                endAnnouncement = oEndDate.toISOString();
+        //         const oEndDate = new Date(sEndDate);
+        //         oEndDate.setDate(oEndDate.getDate() + 1);
+        //         endAnnouncement = oEndDate.toISOString();
 
-                const oPayload = {
-                    data: [{
-                        title: sTitle,
-                        description: sDescription,
-                        announcementType: sAnnouncementType,
-                        announcementStatus: announcementStatus,
-                        startAnnouncement: startAnnouncement,
-                        endAnnouncement: endAnnouncement,
-                        publishedBy: sUserEmail,
-                        toTypes: aTypeIds.map(typeId => ({
-                            type: { typeId }
-                        }))
-                    }]
-                };
+        //         const oPayload = {
+        //             data: [{
+        //                 title: sTitle,
+        //                 description: sDescription,
+        //                 announcementType: sAnnouncementType,
+        //                 announcementStatus: announcementStatus,
+        //                 startAnnouncement: startAnnouncement,
+        //                 endAnnouncement: endAnnouncement,
+        //                 publishedBy: sUserEmail,
+        //                 toTypes: aTypeIds.map(typeId => ({
+        //                     type: { typeId }
+        //                 }))
+        //             }]
+        //         };
 
-                const oBusy = new sap.m.BusyDialog({ text: "Creating announcement..." });
-                oBusy.open();
+        //         const oBusy = new sap.m.BusyDialog({ text: "Creating announcement..." });
+        //         oBusy.open();
 
-                const oModel = this.getOwnerComponent().getModel("announcementModel");
+        //         const oModel = this.getOwnerComponent().getModel("announcementModel");
 
-                // Intercept before request is sent to modify it
-                const fnBeforeRequestSent = function (oEvent) {
-                    const oRequest = oEvent.getParameter("request");
-                    const sUrl = oRequest.requestUri || oRequest.url;
+        //         // Intercept before request is sent to modify it
+        //         const fnBeforeRequestSent = function (oEvent) {
+        //             const oRequest = oEvent.getParameter("request");
+        //             const sUrl = oRequest.requestUri || oRequest.url;
 
-                    if (sUrl && sUrl.includes("bulkCreateAnnouncements")) {
-                        // Remove query parameters from URL
-                        if (oRequest.requestUri) {
-                            oRequest.requestUri = oRequest.requestUri.split('?')[0];
-                        }
-                        if (oRequest.url) {
-                            oRequest.url = oRequest.url.split('?')[0];
-                        }
+        //             if (sUrl && sUrl.includes("bulkCreateAnnouncements")) {
+        //                 // Remove query parameters from URL
+        //                 if (oRequest.requestUri) {
+        //                     oRequest.requestUri = oRequest.requestUri.split('?')[0];
+        //                 }
+        //                 if (oRequest.url) {
+        //                     oRequest.url = oRequest.url.split('?')[0];
+        //                 }
 
-                        // Set the payload as request body
-                        oRequest.data = JSON.stringify(oPayload);
+        //                 // Set the payload as request body
+        //                 oRequest.data = JSON.stringify(oPayload);
 
-                        // Ensure correct headers
-                        oRequest.headers = oRequest.headers || {};
-                        oRequest.headers["Content-Type"] = "application/json";
-                        oRequest.headers["Accept"] = "application/json";
-                    }
-                };
+        //                 // Ensure correct headers
+        //                 oRequest.headers = oRequest.headers || {};
+        //                 oRequest.headers["Content-Type"] = "application/json";
+        //                 oRequest.headers["Accept"] = "application/json";
+        //             }
+        //         };
 
-                // Attach the interceptor
-                oModel.attachRequestSent(fnBeforeRequestSent);
+        //         // Attach the interceptor
+        //         oModel.attachRequestSent(fnBeforeRequestSent);
 
-                // Call the function without urlParameters
-                oModel.callFunction("/bulkCreateAnnouncements", {
-                    method: "POST",
-                    success: (oData) => {
-                        oBusy.close();
-                        oModel.detachRequestSent(fnBeforeRequestSent);
-                        this._oWizardDialog.close();
+        //         // Call the function without urlParameters
+        //         oModel.callFunction("/bulkCreateAnnouncements", {
+        //             method: "POST",
+        //             success: (oData) => {
+        //                 oBusy.close();
+        //                 oModel.detachRequestSent(fnBeforeRequestSent);
+        //                 this._oWizardDialog.close();
 
-                        const oResult = oData?.bulkCreateAnnouncements;
+        //                 const oResult = oData?.bulkCreateAnnouncements;
 
-                        sap.m.MessageToast.show(
-                            oResult?.message || "Announcement created successfully"
-                        );
+        //                 sap.m.MessageToast.show(
+        //                     oResult?.message || "Announcement created successfully"
+        //                 );
 
-                        this.refreshSmartTable();
-                    },
-                    error: (oError) => {
-                        oBusy.close();
-                        oModel.detachRequestSent(fnBeforeRequestSent);
+        //                 this.refreshSmartTable();
+        //             },
+        //             error: (oError) => {
+        //                 oBusy.close();
+        //                 oModel.detachRequestSent(fnBeforeRequestSent);
 
-                        let sMessage = "Failed to create announcement";
-                        try {
-                            const oErr = JSON.parse(oError.responseText);
-                            sMessage = oErr?.error?.message?.value || sMessage;
-                        } catch (e) { /* ignore */ }
+        //                 let sMessage = "Failed to create announcement";
+        //                 try {
+        //                     const oErr = JSON.parse(oError.responseText);
+        //                     sMessage = oErr?.error?.message?.value || sMessage;
+        //                 } catch (e) { /* ignore */ }
 
-                        sap.m.MessageBox.error(sMessage);
-                    }
-                });
+        //                 sap.m.MessageBox.error(sMessage);
+        //             }
+        //         });
 
-            }).catch((err) => {
-                sap.m.MessageBox.error("Failed to get current user: " + err.message);
-            });
-        },
+        //     }).catch((err) => {
+        //         sap.m.MessageBox.error("Failed to get current user: " + err.message);
+        //     });
+        // },
 
         _handleEditSubmit: function () {
             const oWizardModel = this.getView().getModel("wizardModel");
@@ -2848,8 +2932,11 @@ sap.ui.define([
                         startAnnouncement: startAnnouncement,
                         endAnnouncement: endAnnouncement,
                         publishedBy: sUserEmail,
+                        publishedAt: currentDateTime,
+                        modifiedAt: currentDateTime,
+                        modifiedBy: sUserEmail,
                         toTypes: aCategories.map(typeId => ({
-                            type: { typeId: typeId }
+                            typeId: typeId
                         }))
                     };
 
@@ -2882,7 +2969,6 @@ sap.ui.define([
 
                                     sap.m.MessageToast.show(sMessage);
 
-                                    //  Add delay before refresh
                                     setTimeout(() => {
                                         this.refreshSmartTable();
                                     }, 500);
@@ -3402,6 +3488,9 @@ sap.ui.define([
 
         formatDateOnly: function (oDate) {
             return formatter.formatDateOnly(oDate);
+        },
+        formatDateToDDMMYYYY: function (oDate) {
+            return formatter.formatDateToDDMMYYYY(oDate);
         },
 
         getModelData: function () {

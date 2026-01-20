@@ -7,6 +7,42 @@ sap.ui.define([], function () {
          * @param {Date|string} oDate - Date to format
          * @returns {string} Formatted date string
          */
+        formatDateOnly: function (oDate) {
+            if (!oDate) return "";
+
+            const date = oDate instanceof Date ? oDate : new Date(oDate);
+            if (isNaN(date.getTime())) return "";
+
+            const options = { day: '2-digit', month: 'short', year: 'numeric' };
+            return new Intl.DateTimeFormat('en-GB', options).format(date);
+        },
+        formatDateToDDMMYYYY: function (oDate) {
+            if (!oDate) return "";
+
+            const date = oDate instanceof Date ? oDate : new Date(oDate);
+            if (isNaN(date.getTime())) return "";
+
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+
+            return `${day}/${month}/${year}`;
+        },
+
+
+        formatDateToValue: function (oDate) {
+            if (!oDate) return "";
+
+            const date = oDate instanceof Date ? oDate : new Date(oDate);
+            if (isNaN(date.getTime())) return "";
+
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+
+            return `${year}-${month}-${day}`;
+        },
+
         formatUSDateTime: function (oDate) {
             if (!oDate) return "";
 
@@ -64,7 +100,7 @@ sap.ui.define([], function () {
         truncateText: function (sText, iMaxLength) {
             if (!sText) return "";
             iMaxLength = iMaxLength || 100;
-            
+
             if (sText.length <= iMaxLength) {
                 return sText;
             }

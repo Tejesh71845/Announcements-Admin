@@ -9,12 +9,15 @@
     padding-left: 0;
 }
 
-/* RichTextEditor Error Styling */
-.richTextError .sapUiRTE {
-    border: 2px solid #e24c4c !important;
+/* Red border for RichTextEditor validation error */
+.richTextError {
+    border: 2px solid #bb0000 !important;
     border-radius: 4px;
 }
 
-.richTextError iframe {
-    border: 2px solid #e24c4c !important;
+/* Add padding to make the border more visible */
+.richTextError .sapUiRTE {
+    margin: -2px;
 }
+
+

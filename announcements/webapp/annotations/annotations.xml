@@ -18,10 +18,6 @@
                             <PropertyValue Property="Value" Path="announcementType"/>
                         </Record>
                         <Record Type="com.sap.vocabularies.UI.v1.DataField">
-                            <PropertyValue Property="Label" String="Status"/>
-                            <PropertyValue Property="Value" Path="announcementStatus"/>
-                        </Record>
-                        <Record Type="com.sap.vocabularies.UI.v1.DataField">
                             <PropertyValue Property="Label" String="Created On"/>
                             <PropertyValue Property="Value" Path="createdAt"/>
                         </Record>
@@ -30,18 +26,73 @@
                             <PropertyValue Property="Value" Path="createdBy"/>
                         </Record>
                         <Record Type="com.sap.vocabularies.UI.v1.DataField">
+                            <PropertyValue Property="Label" String="Modified On"/>
+                            <PropertyValue Property="Value" Path="modifiedAt"/>
+                        </Record>
+                        <Record Type="com.sap.vocabularies.UI.v1.DataField">
+                            <PropertyValue Property="Label" String="Modified By"/>
+                            <PropertyValue Property="Value" Path="modifiedBy"/>
+                        </Record>
+                        <!-- <Record Type="com.sap.vocabularies.UI.v1.DataField">
                             <PropertyValue Property="Label" String="Start Date"/>
                             <PropertyValue Property="Value" Path="startAnnouncement"/>
                         </Record>
                         <Record Type="com.sap.vocabularies.UI.v1.DataField">
                             <PropertyValue Property="Label" String="End Date"/>
                             <PropertyValue Property="Value" Path="endAnnouncement"/>
+                        </Record> -->
+                        <Record Type="com.sap.vocabularies.UI.v1.DataField">
+                            <PropertyValue Property="Label" String="Published On"/>
+                            <PropertyValue Property="Value" Path="publishedAt"/>    
+                        </Record>
+                        <Record Type="com.sap.vocabularies.UI.v1.DataField">
+                            <PropertyValue Property="Label" String="Published By"/>
+                            <PropertyValue Property="Value" Path="publishedBy"/>
+                        </Record>
+                        <Record Type="com.sap.vocabularies.UI.v1.DataField">
+                            <PropertyValue Property="Label" String="Status"/>
+                            <PropertyValue Property="Value" Path="announcementStatus"/>
                         </Record>
                     </Collection>
                 </Annotation>
                 
             </Annotations>
-            
+
+            <!-- <Annotations Target="AnnouncementService.Announcements/announcementId"
+             xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="UI.Hidden" Bool="true"/> 
+                <Annotation Term="UI.HiddenFilter" Bool="true"/>
+                <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+            </Annotations>
+
+            <Annotations Target="AnnouncementService.Announcements/isActive"
+             xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="UI.Hidden" Bool="true"/>
+                <Annotation Term="UI.HiddenFilter" Bool="true"/>
+                <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+            </Annotations>
+
+            <Annotations Target="AnnouncementService.Announcements/isRead"
+             xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="UI.Hidden" Bool="true"/>
+                <Annotation Term="UI.HiddenFilter" Bool="true"/>
+                <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+            </Annotations>
+
+            <Annotations Target="AnnouncementService.Announcements/startAnnouncement"
+             xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="UI.Hidden" Bool="true"/>
+                <Annotation Term="UI.HiddenFilter" Bool="true"/>
+                <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+            </Annotations>
+
+            <Annotations Target="AnnouncementService.Announcements/endAnnouncement"
+             xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="UI.Hidden" Bool="true"/>
+                <Annotation Term="UI.HiddenFilter" Bool="true"/>
+                <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+            </Annotations>
+            -->
         </Schema>
     </edmx:DataServices>
 </edmx:Edmx>
