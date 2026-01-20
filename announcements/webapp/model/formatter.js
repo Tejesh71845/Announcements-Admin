@@ -59,6 +59,36 @@ sap.ui.define([], function () {
             });
         },
 
+        formatStatusText: function (sStatus) {
+            if (!sStatus) return "";
+
+            switch (sStatus) {
+                case "PUBLISHED":
+                    return "Published";
+                case "TO_BE_PUBLISHED":
+                    return "To Be Published";
+                case "DRAFT":
+                    return "Draft";
+                default:
+                    return sStatus;
+            }
+        },
+
+
+        formatStatusState: function (sStatus) {
+            if (!sStatus) return "None";
+
+            switch (sStatus) {
+                case "PUBLISHED":
+                    return "Success";
+                case "TO_BE_PUBLISHED":
+                    return "Warning";
+                case "DRAFT":
+                    return "Information";
+                default:
+                    return "None";
+            }
+        },
         /**
          * Format date for display (without time)
          * @param {string} sDate - Date string

@@ -85,6 +85,15 @@
                         </Column>
 
                         <Column>
+                            <Text text="Status" />
+                            <customData>
+                                <core:CustomData
+                                    key="p13nData"
+                                    value="{'columnKey': 'announcementStatus', 'columnIndex': '5', 'leadingProperty': 'announcementStatus'}"
+                                />
+                            </customData>
+                        </Column>
+                        <Column>
                             <Text text="Actions" />
                             <customData>
                                 <core:CustomData
@@ -115,6 +124,17 @@
                                     text="{
                                             path: 'publishedAt',
                                             formatter: '.formatDateOnly'
+                                        }"
+                                />
+
+                                <ObjectStatus
+                                    text="{
+                                            path: 'announcementStatus',
+                                            formatter: '.formatStatusText'
+                                        }"
+                                    state="{
+                                            path: 'announcementStatus',
+                                            formatter: '.formatStatusState'
                                         }"
                                 />
 
