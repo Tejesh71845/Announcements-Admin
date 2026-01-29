@@ -188,6 +188,7 @@
                                     <form:content>
                                         <Label
                                             text="{i18n>publishTimingLabel}"
+                                            required="{= !${wizardModel>/isDraftMode}}"
                                         />
                                         <HBox>
                                             <RadioButton
@@ -210,6 +211,7 @@
                                         <Label
                                             text="{i18n>startDate}"
                                             visible="{wizardModel>/showDatePickers}"
+                                            required="{= !${wizardModel>/isDraftMode}}"
                                         />
                                         <DatePicker
                                             id="publishStartDatePicker"
@@ -229,6 +231,7 @@
                                         <Label
                                             text="{i18n>endDate}"
                                             visible="{wizardModel>/showDatePickers}"
+                                            required="{= !${wizardModel>/isDraftMode}}"
                                         />
                                         <DatePicker
                                             id="publishEndDatePicker"

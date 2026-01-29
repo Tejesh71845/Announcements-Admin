@@ -18,9 +18,9 @@
                 useTablePersonalisation="true"
                 header="Announcements"
                 showRowCount="true"
-                enableExport="false"
+                enableExport="true"
                 demandPopin="true"
-                class="sapUiResponsiveContentPadding"
+                class="sapUiResponsiveContentPadding smartTableWithBorder"
                 beforeRebindTable="onBeforeRebindTable"
                 enableAutoColumnWidth="true"
                 placeToolbarInTable="true"
@@ -49,11 +49,17 @@
                         baseSize="0%"
                     />
                 </smartTable:layoutData>
-                <Table
-                    growing="true"
-                    growingThreshold="5"
-                >
+                <Table>
                     <columns>
+                        <!-- <Column>
+                            <Text text="Category" />
+                            <customData>
+                                <core:CustomData
+                                    key="p13nData"
+                                    value="{'columnKey': 'category', 'columnIndex': '1', 'leadingProperty': 'category'}"
+                                />
+                            </customData>
+                        </Column> -->
                         <Column>
                             <Text text="Created On" />
                             <customData>
@@ -106,6 +112,12 @@
                     <items>
                         <ColumnListItem type="Active">
                             <cells>
+                                <!-- <Text
+                                    text="{
+                                        path: 'toTypes',
+                                        formatter: '.formatCategoryNames'
+                                    }"
+                                /> -->
                                 <Text
                                     text="{
                                             path: 'createdAt',

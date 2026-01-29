@@ -1,23 +1,39 @@
 /* Enter your custom styles here */
-/* Hide the first wizard step (Select Option) in edit mode */
+
 .hideFirstWizardStep .sapMWizardProgressNavStep:first-child {
     display: none !important;
 }
 
-/* Optional: Adjust spacing after hiding first step */
 .hideFirstWizardStep .sapMWizardProgressNav {
     padding-left: 0;
 }
 
-/* Red border for RichTextEditor validation error */
 .richTextError {
     border: 2px solid #bb0000 !important;
     border-radius: 4px;
 }
 
-/* Add padding to make the border more visible */
 .richTextError .sapUiRTE {
     margin: -2px;
 }
 
+
+.smartTableWithBorder {
+    border: none;
+}
+
+.smartTableWithBorder .sapMListTbl {
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.smartTableWithBorder .sapMListTbl tbody tr td {
+    border-left: none !important;
+    border-right: none !important;
+}
+
+.sapMMessageToast{
+    max-width: 25rem !important;
+}
 

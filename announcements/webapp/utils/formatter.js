@@ -72,6 +72,19 @@ sap.ui.define([], function () {
             return `${year}-${month}-${day}`;
         },
 
+        formatDateToDDMMYYYY: function (oDate) {
+            if (!oDate) return "";
+
+            const date = oDate instanceof Date ? oDate : new Date(oDate);
+            if (isNaN(date.getTime())) return "";
+
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+
+            return `${day}/${month}/${year}`;
+        },
+
         /**
          * Formats a date/time to US locale string
          * @param {Date|string} oDate - Date object or ISO string

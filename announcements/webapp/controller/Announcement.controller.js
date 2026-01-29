@@ -251,7 +251,6 @@ sap.ui.define([
         },
 
 
-
         _initRichTextEditor: function (sContainerId) {
             if (this._oRichTextEditor) {
                 this._oRichTextEditor.destroy();
@@ -270,13 +269,36 @@ sap.ui.define([
                 showGroupLink: true,
                 showGroupInsert: false,
                 value: sDescription,
-                // valueState: "{wizardModel>/descriptionValueState}",
-                // valueStateText: "{wizardModel>/descriptionValueStateText}",
                 ready: function () {
                     this.addButtonGroup("styles").addButtonGroup("table");
                 },
                 change: (oEvent) => {
                     const sValue = oEvent.getParameter("newValue");
+                    const sPlainText = sValue.replace(/<[^>]*>/g, "").trim();
+
+                    // Check character limit
+                    const MAX_CHARS = 250;
+                    if (sPlainText.length > MAX_CHARS) {
+                        // Show warning message
+                        if (!this._isCharLimitToastShown) {
+                            MessageToast.show(`Description cannot exceed ${MAX_CHARS} characters. Current: ${sPlainText.length}`);
+                            this._isCharLimitToastShown = true;
+
+                            // Reset flag after 3 seconds to allow showing again
+                            setTimeout(() => {
+                                this._isCharLimitToastShown = false;
+                            }, 3000);
+                        }
+
+                        // Revert to previous valid value
+                        const sPreviousValue = oWizardModel.getProperty("/description") || "";
+                        this._oRichTextEditor.setValue(sPreviousValue);
+                        return;
+                    }
+
+                    // Reset toast flag on valid input
+                    this._isCharLimitToastShown = false;
+
                     oWizardModel.setProperty("/description", sValue);
                     this._handleResetButtonVisibility(oWizardModel);
                     this._validateRichTextDescription(oWizardModel);
@@ -473,7 +495,7 @@ sap.ui.define([
             oTomorrow.setDate(oTomorrow.getDate() + 1);
 
             const oSevenDaysLater = new Date(oToday);
-            oSevenDaysLater.setDate(oSevenDaysLater.getDate() + 7);
+            oSevenDaysLater.setDate(oSevenDaysLater.getDate() + 30);
 
             return {
                 // Field values
@@ -1097,14 +1119,22 @@ sap.ui.define([
             let sValue = oEvent.getParameter("value") || "";
 
             if (sControlType === "sap.m.Input" || sControlType === "sap.m.TextArea") {
+                // Remove special characters (keep your existing logic)
                 sValue = sValue.replace(/[^a-zA-Z0-9 ]/g, "");
 
-                const iMaxLength = oSource.getMaxLength ? oSource.getMaxLength() : 500;
+                // Get max length from control or use default
+                const iMaxLength = oSource.getMaxLength && oSource.getMaxLength() > 0
+                    ? oSource.getMaxLength()
+                    : 100;
+
+                // **ENFORCE HARD LIMIT**
                 if (sValue.length > iMaxLength) {
                     sValue = sValue.substring(0, iMaxLength);
+                    oSource.setValue(sValue); // Update the input field immediately
                 }
 
-                if (sValue !== oSource.getValue()) {
+                // Update value if it was modified
+                if (sValue !== oEvent.getParameter("value")) {
                     oSource.setValue(sValue);
                 }
             }
@@ -1400,7 +1430,7 @@ sap.ui.define([
             if (sOption === "PUBLISH") {
                 // **FIX: Format both dates in dd/MM/yyyy format for consistency**
                 const oEndDate = new Date(oToday);
-                oEndDate.setDate(oEndDate.getDate() + 7);
+                oEndDate.setDate(oEndDate.getDate() + 30);
 
                 // Use formatDateToValue for internal value (yyyy-MM-dd)
                 const sTodayValue = formatter.formatDateToValue(oToday);
@@ -1418,16 +1448,16 @@ sap.ui.define([
                 oWizardModel.setProperty("/draftEnabled", true);
 
                 // Force DatePicker to update display
-                const oStartDatePicker = this.byId("publishStartDatePicker");
-                if (oStartDatePicker) {
-                    oStartDatePicker.setValue(sTodayValue);
-                }
+                // const oStartDatePicker = this.byId("publishStartDatePicker");
+                // if (oStartDatePicker) {
+                //     oStartDatePicker.setValue(sTodayValue);
+                // }
             } else {
                 // Publish Later: Both enabled
                 const oTomorrow = new Date(oToday);
                 oTomorrow.setDate(oTomorrow.getDate() + 1);
                 const oEndDate = new Date(oTomorrow);
-                oEndDate.setDate(oEndDate.getDate() + 7);
+                oEndDate.setDate(oEndDate.getDate() + 30);
 
                 const sTomorrowValue = formatter.formatDateToValue(oTomorrow);
                 const sEndDateValue = formatter.formatDateToValue(oEndDate);
@@ -1484,7 +1514,7 @@ sap.ui.define([
 
             // Auto-populate End Date (Start Date + 7 days)
             const oEndDate = new Date(oSelected);
-            oEndDate.setDate(oEndDate.getDate() + 7);
+            oEndDate.setDate(oEndDate.getDate() + 30);
             const sEndDateValue = this._formatDateToValue(oEndDate);
 
             oWizardModel.setProperty("/publishEndDate", sEndDateValue);
@@ -2926,7 +2956,7 @@ sap.ui.define([
 
                     const oPayload = {
                         title: sTitle,
-                        description: sDescription,
+                        description: sDescriptionHTML,
                         announcementType: sAnnouncementType,
                         announcementStatus: announcementStatus,
                         startAnnouncement: startAnnouncement,
@@ -3404,6 +3434,8 @@ sap.ui.define([
             });
         },
 
+        // Replace the _deleteItem method in your controller with this updated version:
+
         _deleteItem: function (sAnnouncementId, sTitle) {
             const oBusy = new sap.m.BusyDialog({ text: "Deleting announcement..." });
             oBusy.open();
@@ -3417,11 +3449,33 @@ sap.ui.define([
                         contentType: "application/json",
                         dataType: "json",
                         headers: {
-                            "X-CSRF-Token": csrfToken  // Include CSRF token
+                            "X-CSRF-Token": csrfToken
                         },
                         success: (oResponse) => {
                             oBusy.close();
-                            sap.m.MessageToast.show(`Announcement '${sTitle}' deleted successfully!`);
+
+                            // Show centered MessageToast with longer duration, custom width and padding
+                            sap.m.MessageToast.show(`Announcement '${sTitle}' deleted successfully!`, {
+                                duration: 4000,                    // Duration in milliseconds (4 seconds)
+                                width: "25rem",                     // Custom width (increased)
+                                my: "center center",               // Position at center
+                                at: "center center",               // Align to center
+                                of: window,                        // Relative to window
+                                offset: "0 0",                     // No offset
+                                collision: "fit fit",              // Keep within viewport
+                                autoClose: true,                   // Auto close after duration
+                                animationDuration: 500,            // Animation duration
+                                closeOnBrowserNavigation: true
+                            });
+
+                            // Add custom styling with padding to the toast
+                            setTimeout(() => {
+                                const oToast = document.querySelector(".sapMMessageToast");
+                                if (oToast) {
+                                    oToast.style.padding = "1.5rem 2rem";
+                                    oToast.style.fontSize = "1rem";
+                                }
+                            }, 50);
 
                             // Add delay before refresh
                             setTimeout(() => {
@@ -3492,6 +3546,11 @@ sap.ui.define([
         formatDateToDDMMYYYY: function (oDate) {
             return formatter.formatDateToDDMMYYYY(oDate);
         },
+
+        // formatCategoryNames: function (aToTypes) {
+        //     const oCategoryModel = this.getView().getModel("categoryModel");
+        //     return formatter.formatCategoryNames(aToTypes, oCategoryModel);
+        // },
 
         getModelData: function () {
             return this.getView().getModel().getData();

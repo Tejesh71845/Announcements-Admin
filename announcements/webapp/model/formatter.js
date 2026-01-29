@@ -121,6 +121,29 @@ sap.ui.define([], function () {
             return sCategory.charAt(0).toUpperCase() + sCategory.slice(1);
         },
 
+        formatCategoryNames: function (aToTypes, oCategoryModel) {
+            if (!aToTypes || !Array.isArray(aToTypes) || aToTypes.length === 0) {
+                return "N/A";
+            }
+
+            if (!oCategoryModel) {
+                return "N/A";
+            }
+
+            const idToNameMap = oCategoryModel.getProperty("/idToNameMap") || {};
+
+            // Extract type IDs and map to category names
+            const aCategoryNames = aToTypes
+                .map(item => {
+                    // Handle different possible structures of the navigation property
+                    const typeId = item.type_typeId || (item.type && item.type.typeId) || item.typeId;
+                    return idToNameMap[typeId];
+                })
+                .filter(Boolean); 
+
+            return aCategoryNames.length > 0 ? aCategoryNames.join(", ") : "N/A";
+        },
+
         /**
          * Truncate text with ellipsis
          * @param {string} sText - Text to truncate
