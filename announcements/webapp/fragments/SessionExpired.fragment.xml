@@ -1,0 +1,52 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+>
+    <Dialog
+        id="sessionExpiredDialog"
+        title="Session Expired"
+        type="Message"
+        state="Warning"
+        contentWidth="400px"
+        draggable="false"
+        resizable="false"
+        closeOnNavigation="false"
+    >
+        <content>
+            <VBox
+                alignItems="Center"
+                justifyContent="Center"
+                class="sapUiMediumMargin"
+            >
+                <core:Icon
+                    src="sap-icon://message-warning"
+                    size="3rem"
+                    color="#E9730C"
+                    class="sapUiSmallMarginBottom"
+                />
+                <Title
+                    text="Your session has expired"
+                    level="H2"
+                    class="sapUiSmallMarginBottom"
+                />
+                <Text
+                    text="You've been timed out due to inactivity."
+                    textAlign="Center"
+                    class="sapUiTinyMarginBottom"
+                />
+                <Text
+                    text="Click Refresh to go to the Application."
+                    textAlign="Center"
+                />
+            </VBox>
+        </content>
+        <buttons>
+            <Button
+                text="Refresh"
+                type="Emphasized"
+                press="onSessionExpiredRefresh"
+                icon="sap-icon://refresh"
+            />
+        </buttons>
+    </Dialog>
+</core:FragmentDefinition>

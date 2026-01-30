@@ -37,3 +37,22 @@
     max-width: 25rem !important;
 }
 
+/* Session Expired Dialog Styling */
+#sessionExpiredDialog .sapMDialogSection {
+    padding: 2rem 3rem;
+}
+
+#sessionExpiredDialog .sapMBtn {
+    min-width: 200px;
+    height: 3rem;
+}
+
+#sessionExpiredDialog .sapMBtnInner {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+/* Warning icon styling */
+.sessionExpiredIcon {
+    color: #E9730C !important;
+}

@@ -94,6 +94,55 @@ sap.ui.define([
             MessageToast.show("Table refreshed");
         },
 
+        /**
+ * Check if an active Planned Scheduled announcement already exists
+ * @returns {Promise} Promise that resolves with boolean (true if exists)
+ */
+        _checkActivePlannedScheduledExists: function () {
+            return new Promise((resolve, reject) => {
+                const oModel = this.getOwnerComponent().getModel("announcementModel");
+
+                oModel.read("/Announcements", {
+                    filters: [
+                        new sap.ui.model.Filter("isActive", sap.ui.model.FilterOperator.EQ, true),
+                        new sap.ui.model.Filter("announcementType", sap.ui.model.FilterOperator.Contains, "Planned Scheduled"),
+                        new sap.ui.model.Filter({
+                            filters: [
+                                new sap.ui.model.Filter("announcementStatus", sap.ui.model.FilterOperator.EQ, "PUBLISHED"),
+                                new sap.ui.model.Filter("announcementStatus", sap.ui.model.FilterOperator.EQ, "TO_BE_PUBLISHED")
+                            ],
+                            and: false
+                        })
+                    ],
+                    success: (oData) => {
+                        const bExists = oData.results && oData.results.length > 0;
+                        resolve(bExists);
+                    },
+                    error: (oError) => {
+                        console.error("Error checking Planned Scheduled announcements:", oError);
+                        reject(oError);
+                    }
+                });
+            });
+        },
+
+        /**
+         * Check if the announcement being created/edited contains Planned Scheduled type
+         * @param {Array} aAnnouncementTypeKeys - Array of selected announcement type keys
+         * @param {string} sEditId - ID of announcement being edited (null for new)
+         * @returns {boolean} True if Planned Scheduled is selected
+         */
+        _hasPlannedScheduledType: function (aAnnouncementTypeKeys, sEditId) {
+            const oAnnouncementTypeModel = this.getView().getModel("announcementTypeModel");
+            const aTypeList = oAnnouncementTypeModel.getProperty("/types") || [];
+
+            const aSelectedTypes = aAnnouncementTypeKeys
+                .map(key => aTypeList.find(t => t.key === key)?.text)
+                .filter(Boolean);
+
+            return aSelectedTypes.some(type => type.toLowerCase().includes("planned scheduled"));
+        },
+
         _initAnnouncementTypeModel: function () {
             const oAnnouncementTypeModel = new JSONModel();
             const sModelPath = sap.ui.require.toUrl("com/incture/announcements/model/AnnouncementTypes.json");
@@ -852,19 +901,8 @@ sap.ui.define([
                     return;
                 }
 
-                MessageBox.confirm(
-                    `Are you sure you want to submit ${bulkData.length} announcement(s)?`,
-                    {
-                        title: "Confirm Submit",
-                        actions: [MessageBox.Action.YES, MessageBox.Action.NO],
-                        emphasizedAction: MessageBox.Action.YES,
-                        onClose: (oAction) => {
-                            if (oAction === MessageBox.Action.YES) {
-                                this._handleBulkSubmit();
-                            }
-                        }
-                    }
-                );
+                // Check for Planned Scheduled in bulk data
+                this._checkPlannedScheduledInBulk(bulkData);
             } else {
                 // **FIX: Validate all fields and show errors**
                 if (!this._validateAllFieldsWithErrors()) {
@@ -876,25 +914,60 @@ sap.ui.define([
                     return;
                 }
 
-                const sConfirmMessage = bIsEditMode
-                    ? "Are you sure you want to submit these changes?"
-                    : "Are you sure you want to submit this announcement?";
+                // Check for Planned Scheduled announcement
+                const aAnnouncementTypeKeys = oWizardModel.getProperty("/announcementType") || [];
+                const sEditId = bIsEditMode ? oWizardModel.getProperty("/editId") : null;
 
-                MessageBox.confirm(sConfirmMessage, {
-                    title: "Confirm Submit",
-                    actions: [MessageBox.Action.YES, MessageBox.Action.NO],
-                    emphasizedAction: MessageBox.Action.YES,
-                    onClose: (oAction) => {
-                        if (oAction === MessageBox.Action.YES) {
-                            if (bIsEditMode) {
-                                this._handleEditSubmit();
-                            } else {
-                                this._handleSubmitAnnouncement();
+                if (this._hasPlannedScheduledType(aAnnouncementTypeKeys, sEditId)) {
+                    this._checkActivePlannedScheduledExists()
+                        .then((bExists) => {
+                            if (bExists && !bIsEditMode) {
+                                MessageBox.error(
+                                    "An active 'Planned Scheduled' announcement already exists in the system. " +
+                                    "Only one active 'Planned Scheduled' announcement is allowed at a time. " +
+                                    "Please delete or deactivate the existing one before creating a new one.",
+                                    {
+                                        title: "Duplicate Planned Scheduled Announcement"
+                                    }
+                                );
+                                return;
                             }
+
+                            // Proceed with submission
+                            this._proceedWithSubmit(bIsEditMode);
+                        })
+                        .catch((oError) => {
+                            MessageBox.error("Failed to validate announcement. Please try again.");
+                        });
+                } else {
+                    // No Planned Scheduled type, proceed directly
+                    this._proceedWithSubmit(bIsEditMode);
+                }
+            }
+        },
+
+        /**
+         * Proceed with announcement submission after validation
+         */
+        _proceedWithSubmit: function (bIsEditMode) {
+            const sConfirmMessage = bIsEditMode
+                ? "Are you sure you want to submit these changes?"
+                : "Are you sure you want to submit this announcement?";
+
+            MessageBox.confirm(sConfirmMessage, {
+                title: "Confirm Submit",
+                actions: [MessageBox.Action.YES, MessageBox.Action.NO],
+                emphasizedAction: MessageBox.Action.YES,
+                onClose: (oAction) => {
+                    if (oAction === MessageBox.Action.YES) {
+                        if (bIsEditMode) {
+                            this._handleEditSubmit();
+                        } else {
+                            this._handleSubmitAnnouncement();
                         }
                     }
-                });
-            }
+                }
+            });
         },
 
         _validateAllFieldsWithErrors: function () {
