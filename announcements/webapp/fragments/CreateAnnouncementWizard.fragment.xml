@@ -79,13 +79,13 @@
                                     width="150px"
                                     class="sapUiMediumMarginEnd"
                                 />
-                                <Button
+                                <!-- <Button
                                     text="{i18n>bulkUploadButton}"
                                     press="onSwitchToBulkWizard"
                                     type="Default"
                                     icon="sap-icon://upload"
                                     width="150px"
-                                />
+                                /> -->
                             </HBox>
                         </VBox>
                     </content>
@@ -143,7 +143,7 @@
 
                                     <Label
                                         text="{i18n>categoryLabel}"
-                                        required="{= !${wizardModel>/isDraftMode}}"
+                                        required="false"
                                     />
                                     <MultiComboBox
                                         id="singleCategoryMultiComboBox"
@@ -210,7 +210,7 @@
 
                                         <Label
                                             text="{i18n>startDate}"
-                                            visible="{wizardModel>/showDatePickers}"
+                                            visible="{= ${wizardModel>/showDatePickers}}"
                                             required="{= !${wizardModel>/isDraftMode}}"
                                         />
                                         <DatePicker
@@ -223,7 +223,7 @@
                                             valueFormat="yyyy-MM-dd"
                                             placeholder="{wizardModel>/startDatePlaceholder}"
                                             enabled="{wizardModel>/startDateEnabled}"
-                                            visible="{wizardModel>/showDatePickers}"
+                                            visible="{= ${wizardModel>/showDatePickers}}"
                                             minDate="{wizardModel>/minPublishDate}"
                                             width="50%"
                                         />
@@ -708,6 +708,15 @@
                 type="Transparent"
                 icon="sap-icon://decline"
                 visible="{wizardModel>/showCancelButton}"
+            />
+
+            <Button
+                id="resetButton"
+                text="{i18n>resetButton}"
+                press="onResetPress"
+                type="Transparent"
+                icon="sap-icon://reset"
+                visible="{wizardModel>/showResetButton}"
             />
 
             <!-- <Button

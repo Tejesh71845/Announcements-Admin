@@ -834,28 +834,16 @@ sap.ui.define([
                 this._initRichTextEditor("richTextContainer");
             }, bIsEditMode ? 200 : 100);
 
-            // FIXED: Show Cancel, Draft, Submit buttons when entering create step
-            if (bIsEditMode) {
-                this._setButtonVisibility({
-                    showCancelButton: true,
-                    showDraftButton: true,
-                    showSubmitButton: true,
-                    showReviewButton: false,
-                    showPublishButton: false,
-                    showUpdateButton: false,
-                    showResetButton: false
-                });
-            } else {
-                this._setButtonVisibility({
-                    showCancelButton: true,
-                    showDraftButton: true,
-                    showSubmitButton: true,
-                    showReviewButton: false,
-                    showPublishButton: false,
-                    showUpdateButton: false,
-                    showResetButton: false
-                });
-            }
+            // Show buttons for create/edit step - Reset button will be shown when user makes changes
+            this._setButtonVisibility({
+                showCancelButton: true,
+                showDraftButton: true,
+                showSubmitButton: true,
+                showReviewButton: false,
+                showPublishButton: false,
+                showUpdateButton: false,
+                showResetButton: false // Will be shown when user makes changes via _handleResetButtonVisibility
+            });
         },
 
 
@@ -974,7 +962,7 @@ sap.ui.define([
             const oWizardModel = this.getView().getModel("wizardModel");
             const sTitle = (oWizardModel.getProperty("/title") || "").trim();
             const aAnnouncementType = oWizardModel.getProperty("/announcementType") || [];
-            const aCategory = oWizardModel.getProperty("/category") || [];
+            // const aCategory = oWizardModel.getProperty("/category") || [];
             const sDescriptionHTML = (oWizardModel.getProperty("/description") || "").trim();
             const sPlainText = sDescriptionHTML.replace(/<[^>]*>/g, "").trim();
 
@@ -997,12 +985,14 @@ sap.ui.define([
             }
 
             // Validate Category
-            if (aCategory.length === 0) {
-                this._setValidationState(oWizardModel, "category", false, "At least one category is required");
-                bValid = false;
-            } else {
-                this._setValidationState(oWizardModel, "category", true, "");
-            }
+            // if (aCategory.length === 0) {
+            //     this._setValidationState(oWizardModel, "category", false, "At least one category is required");
+            //     bValid = false;
+            // } else {
+            //     this._setValidationState(oWizardModel, "category", true, "");
+            // }
+
+            this._setValidationState(oWizardModel, "category", true, "");
 
             // Validate Description (RichTextEditor)
             if (!sPlainText) {
@@ -1033,10 +1023,10 @@ sap.ui.define([
             const oWizardModel = this.getView().getModel("wizardModel");
             const sTitle = (oWizardModel.getProperty("/title") || "").trim();
             const aAnnouncementType = oWizardModel.getProperty("/announcementType") || [];
-            const aCategory = oWizardModel.getProperty("/category") || [];
+            // const aCategory = oWizardModel.getProperty("/category") || [];
             const sDescription = (oWizardModel.getProperty("/description") || "").trim();
 
-            return sTitle && aAnnouncementType.length > 0 && aCategory.length > 0 && sDescription;
+            return sTitle && aAnnouncementType.length > 0 && sDescription;
         },
 
         _handleSubmitAnnouncement: function () {
@@ -1170,11 +1160,10 @@ sap.ui.define([
             // Check overall step validity
             const sTitle = (oWizardModel.getProperty("/title") || "").trim();
             const aAnnouncementType = oWizardModel.getProperty("/announcementType") || [];
-            const aCategory = oWizardModel.getProperty("/category") || [];
+            // const aCategory = oWizardModel.getProperty("/category") || [];
 
             const bOverallValid = sTitle.length > 0 &&
                 aAnnouncementType.length > 0 &&
-                aCategory.length > 0 &&
                 bValid;
 
             oWizardModel.setProperty("/singleCreateStepValidated", bOverallValid);
@@ -1284,7 +1273,7 @@ sap.ui.define([
             const aCategory = oWizardModel.getProperty("/category") || [];
             const sDescription = (oWizardModel.getProperty("/description") || "").trim();
 
-            const bOverallValid = sTitle && aAnnouncementType.length > 0 && aCategory.length > 0 && sDescription;
+            const bOverallValid = sTitle && aAnnouncementType.length > 0 && sDescription;
 
             oWizardModel.setProperty("/singleCreateStepValidated", !!bOverallValid);
             const oStep = this.byId("singleCreateStep");
@@ -1307,7 +1296,7 @@ sap.ui.define([
             const sTitle = (oWizardModel.getProperty("/title") || "").trim();
             const aCategory = oWizardModel.getProperty("/category") || [];
             const sDescription = (oWizardModel.getProperty("/description") || "").trim();
-            const bOverallValid = sTitle && bValid && aCategory.length > 0 && sDescription;
+            const bOverallValid = sTitle && bValid && sDescription;
             oWizardModel.setProperty("/singleCreateStepValidated", !!bOverallValid);
 
             const oStep = this.byId("singleCreateStep");
@@ -1316,13 +1305,15 @@ sap.ui.define([
 
         _validateMultiCategory: function (oWizardModel) {
             const aCategories = oWizardModel.getProperty("/category") || [];
-            const bValid = Array.isArray(aCategories) && aCategories.length > 0;
-            this._setValidationState(oWizardModel, "category", bValid, "At least one category is required");
+            // const bValid = Array.isArray(aCategories) && aCategories.length > 0;
+            // this._setValidationState(oWizardModel, "category", bValid, "At least one category is required");
+
+            this._setValidationState(oWizardModel, "category", true, "");
 
             const sTitle = (oWizardModel.getProperty("/title") || "").trim();
             const aAnnouncementType = oWizardModel.getProperty("/announcementType") || [];
             const sDescription = (oWizardModel.getProperty("/description") || "").trim();
-            const bOverallValid = sTitle && aAnnouncementType.length > 0 && bValid && sDescription;
+            const bOverallValid = sTitle && aAnnouncementType.length > 0 && sDescription;
             oWizardModel.setProperty("/singleCreateStepValidated", !!bOverallValid);
 
             const oStep = this.byId("singleCreateStep");
@@ -1331,28 +1322,54 @@ sap.ui.define([
 
         _handleResetButtonVisibility: function (oWizardModel) {
             const bIsEditMode = oWizardModel.getProperty("/isEditMode");
+            const sCurrentFlow = oWizardModel.getProperty("/currentFlow");
+
+            // Only show Reset button for SINGLE flow
+            if (sCurrentFlow !== "SINGLE") {
+                oWizardModel.setProperty("/showResetButton", false);
+                return;
+            }
+
             const sTitle = oWizardModel.getProperty("/title") || "";
             const aAnnouncementType = oWizardModel.getProperty("/announcementType") || [];
             const aCategory = oWizardModel.getProperty("/category") || [];
             const sDescription = oWizardModel.getProperty("/description") || "";
 
+            // ✅ FIX: Also check publish-related fields
+            const sPublishOption = oWizardModel.getProperty("/publishOption") || "";
+            const sPublishStartDate = oWizardModel.getProperty("/publishStartDate") || "";
+            const sPublishEndDate = oWizardModel.getProperty("/publishEndDate") || "";
+
             if (bIsEditMode) {
+                // Edit Mode: Show Reset if any field differs from original
                 const sOriginalTitle = oWizardModel.getProperty("/originalTitle") || "";
                 const aOriginalAnnouncementType = oWizardModel.getProperty("/originalAnnouncementType") || [];
                 const aOriginalCategory = oWizardModel.getProperty("/originalCategory") || [];
                 const sOriginalDescription = oWizardModel.getProperty("/originalDescription") || "";
 
+                // ✅ FIX: Also compare publish-related original fields
+                const sOriginalPublishOption = oWizardModel.getProperty("/originalPublishOption") || "";
+                const sOriginalPublishStartDate = oWizardModel.getProperty("/originalPublishStartDate") || "";
+                const sOriginalPublishEndDate = oWizardModel.getProperty("/originalPublishEndDate") || "";
+
                 const bHasChanged = (sTitle !== sOriginalTitle) ||
-                    (JSON.stringify(aAnnouncementType.sort()) !== JSON.stringify(aOriginalAnnouncementType.sort())) ||
-                    (JSON.stringify(aCategory.sort()) !== JSON.stringify(aOriginalCategory.sort())) ||
-                    (sDescription !== sOriginalDescription);
+                    (JSON.stringify([...aAnnouncementType].sort()) !== JSON.stringify([...aOriginalAnnouncementType].sort())) ||
+                    (JSON.stringify([...aCategory].sort()) !== JSON.stringify([...aOriginalCategory].sort())) ||
+                    (sDescription !== sOriginalDescription) ||
+                    (sPublishOption !== sOriginalPublishOption) ||
+                    (sPublishStartDate !== sOriginalPublishStartDate) ||
+                    (sPublishEndDate !== sOriginalPublishEndDate);
 
                 oWizardModel.setProperty("/showResetButton", bHasChanged);
             } else {
+                // Create Mode: Show Reset if user has entered any data
                 const bUserHasStartedTyping = sTitle.length > 0 ||
                     aAnnouncementType.length > 0 ||
                     aCategory.length > 0 ||
-                    sDescription.length > 0;
+                    sDescription.length > 0 ||
+                    sPublishOption.length > 0 ||
+                    sPublishStartDate.length > 0 ||
+                    sPublishEndDate.length > 0;
 
                 oWizardModel.setProperty("/showResetButton", bUserHasStartedTyping);
             }
@@ -1501,11 +1518,9 @@ sap.ui.define([
             oToday.setHours(0, 0, 0, 0);
 
             if (sOption === "PUBLISH") {
-                // **FIX: Format both dates in dd/MM/yyyy format for consistency**
                 const oEndDate = new Date(oToday);
                 oEndDate.setDate(oEndDate.getDate() + 30);
 
-                // Use formatDateToValue for internal value (yyyy-MM-dd)
                 const sTodayValue = formatter.formatDateToValue(oToday);
                 const sEndDateValue = formatter.formatDateToValue(oEndDate);
 
@@ -1517,16 +1532,14 @@ sap.ui.define([
                 oWizardModel.setProperty("/publishStartDateValueStateText", "");
                 oWizardModel.setProperty("/publishEndDateValueState", "None");
                 oWizardModel.setProperty("/publishEndDateValueStateText", "");
-                oWizardModel.setProperty("/minEndDate", oToday);
-                oWizardModel.setProperty("/draftEnabled", true);
 
-                // Force DatePicker to update display
-                // const oStartDatePicker = this.byId("publishStartDatePicker");
-                // if (oStartDatePicker) {
-                //     oStartDatePicker.setValue(sTodayValue);
-                // }
+                // **CHANGED: Set minEndDate to day AFTER today for Publish Now**
+                const oMinEndDate = new Date(oToday);
+                oMinEndDate.setDate(oMinEndDate.getDate() + 1);
+                oWizardModel.setProperty("/minEndDate", oMinEndDate);
+
+                oWizardModel.setProperty("/draftEnabled", true);
             } else {
-                // Publish Later: Both enabled
                 const oTomorrow = new Date(oToday);
                 oTomorrow.setDate(oTomorrow.getDate() + 1);
                 const oEndDate = new Date(oTomorrow);
@@ -1540,12 +1553,20 @@ sap.ui.define([
                 oWizardModel.setProperty("/publishStartDate", sTomorrowValue);
                 oWizardModel.setProperty("/publishEndDate", sEndDateValue);
                 oWizardModel.setProperty("/minPublishDate", oTomorrow);
-                oWizardModel.setProperty("/minEndDate", oTomorrow);
+
+                // **CHANGED: Set minEndDate to day AFTER tomorrow for Publish Later**
+                const oMinEndDate = new Date(oTomorrow);
+                oMinEndDate.setDate(oMinEndDate.getDate() + 1);
+                oWizardModel.setProperty("/minEndDate", oMinEndDate);
+
                 oWizardModel.setProperty("/draftEnabled", false);
             }
 
             oWizardModel.setProperty("/cancelEnabled", true);
             oWizardModel.setProperty("/publishEnabled", true);
+
+            // Check if Reset button should be visible after publish option change
+            this._handleResetButtonVisibility(oWizardModel);
         },
         _formatDateToValue: function (oDate) {
             return formatter.formatDateToValue(oDate);
@@ -1585,7 +1606,7 @@ sap.ui.define([
             oWizardModel.setProperty("/publishStartDateValueState", "None");
             oWizardModel.setProperty("/publishStartDateValueStateText", "");
 
-            // Auto-populate End Date (Start Date + 7 days)
+            // Auto-populate End Date (Start Date + 30 days)
             const oEndDate = new Date(oSelected);
             oEndDate.setDate(oEndDate.getDate() + 30);
             const sEndDateValue = this._formatDateToValue(oEndDate);
@@ -1594,8 +1615,12 @@ sap.ui.define([
             oWizardModel.setProperty("/publishEndDateValueState", "None");
             oWizardModel.setProperty("/publishEndDateValueStateText", "");
 
-            // Update minimum date for End Date picker to selected start date
-            oWizardModel.setProperty("/minEndDate", oSelected);
+            // **CHANGED: Update minimum date for End Date picker to day AFTER selected start date**
+            const oMinEndDate = new Date(oSelected);
+            oMinEndDate.setDate(oMinEndDate.getDate() + 1);
+            oWizardModel.setProperty("/minEndDate", oMinEndDate);
+
+            this._handleResetButtonVisibility(oWizardModel);
         },
         onPublishEndDateChange: function (oEvent) {
             const sValue = oEvent.getParameter("value");
@@ -1620,39 +1645,41 @@ sap.ui.define([
                 return;
             }
 
-            // Validate End Date is after or equal to Start Date
+            // **CHANGED: Validate End Date is AFTER Start Date (not equal)**
             const sStartDate = oWizardModel.getProperty("/publishStartDate");
             if (sStartDate) {
                 const oStartDate = new Date(sStartDate);
                 oStartDate.setHours(0, 0, 0, 0);
-                if (oSelected < oStartDate) { // **CHANGED: from <= to <**
+                if (oSelected <= oStartDate) { // **CHANGED: from < to <=**
                     oWizardModel.setProperty("/publishEndDateValueState", "Error");
-                    oWizardModel.setProperty("/publishEndDateValueStateText", "End Date must be on or after Start Date");
+                    oWizardModel.setProperty("/publishEndDateValueStateText", "End Date must be after Start Date");
                     return;
                 }
             }
 
             oWizardModel.setProperty("/publishEndDateValueState", "None");
             oWizardModel.setProperty("/publishEndDateValueStateText", "");
+
+            this._handleResetButtonVisibility(oWizardModel);
         },
 
         _validateSingleCreateStep: function () {
             const oWizardModel = this.getView().getModel("wizardModel");
             const sTitle = (oWizardModel.getProperty("/title") || "").trim();
             const aAnnouncementType = oWizardModel.getProperty("/announcementType") || [];
-            const aCategory = oWizardModel.getProperty("/category") || [];
+            // const aCategory = oWizardModel.getProperty("/category") || [];
             const sDescription = (oWizardModel.getProperty("/description") || "").trim();
 
             const bTitleValid = sTitle.length > 0;
             const bAnnouncementTypeValid = aAnnouncementType.length > 0;
-            const bCategoryValid = aCategory.length > 0;
+            // const bCategoryValid = aCategory.length > 0;
             const bDescriptionValid = sDescription.length > 0;
 
-            const bOverallValid = bTitleValid && bAnnouncementTypeValid && bCategoryValid && bDescriptionValid;
+            const bOverallValid = bTitleValid && bAnnouncementTypeValid && bDescriptionValid;
 
             this._setValidationState(oWizardModel, "title", bTitleValid, "Title is required");
             this._setValidationState(oWizardModel, "announcementType", bAnnouncementTypeValid, "Announcement Type is required");
-            this._setValidationState(oWizardModel, "category", bCategoryValid, "Category is required");
+            // this._setValidationState(oWizardModel, "category", bCategoryValid, "Category is required");
             this._setValidationState(oWizardModel, "description", bDescriptionValid, "Description is required");
 
             oWizardModel.setProperty("/singleCreateStepValidated", bOverallValid);
@@ -2479,7 +2506,7 @@ sap.ui.define([
                 showReviewButton: false,
                 showPublishButton: false,
                 showUpdateButton: false,
-                showResetButton: false
+                showResetButton: false  // Will be shown when user makes changes
             });
 
             // Force wizard layout update
@@ -2487,18 +2514,21 @@ sap.ui.define([
                 oWizard.invalidate();
 
                 // Initialize RTE after wizard is fully rendered
-                // Increased timeout for RTE initialization
                 setTimeout(() => {
                     const sDescription = oWizardModel.getProperty("/description") || "";
-                    console.log("Initializing RTE with description:", sDescription); // Debug log
+                    console.log("Initializing RTE with description:", sDescription);
 
                     this._initRichTextEditor("richTextContainer");
 
                     // Verify RTE was created and has the right value
                     if (this._oRichTextEditor) {
-                        console.log("RTE initialized, value:", this._oRichTextEditor.getValue()); // Debug log
+                        console.log("RTE initialized, value:", this._oRichTextEditor.getValue());
                     }
-                }, 200); // Increased timeout
+
+                    // FIX: After RTE is initialized, check if Reset button should be visible
+                    // This ensures Reset button appears if original data differs from defaults
+                    this._handleResetButtonVisibility(oWizardModel);
+                }, 200);
             }, 200);
         },
 
@@ -2695,14 +2725,22 @@ sap.ui.define([
                 return false;
             }
 
+            // **CHANGED: Validate End Date is AFTER Start Date (not equal)**
             if (sOption === "UNPUBLISH") {
-                // Validate End Date is on or after Start Date
                 const oStartDate = new Date(sStartDate);
                 oStartDate.setHours(0, 0, 0, 0);
-                if (oEndDate < oStartDate) {
+                if (oEndDate <= oStartDate) { // **CHANGED: from < to <=**
                     oWizardModel.setProperty("/publishEndDateValueState", "Error");
-                    oWizardModel.setProperty("/publishEndDateValueStateText", "End Date must be on or after Start Date");
-                    MessageBox.error("End Date must be on or after Start Date.");
+                    oWizardModel.setProperty("/publishEndDateValueStateText", "End Date must be after Start Date");
+                    MessageBox.error("End Date must be after Start Date.");
+                    return false;
+                }
+            } else if (sOption === "PUBLISH") {
+                // For Publish Now, end date must be after today
+                if (oEndDate <= oToday) { // **CHANGED: from < to <=**
+                    oWizardModel.setProperty("/publishEndDateValueState", "Error");
+                    oWizardModel.setProperty("/publishEndDateValueStateText", "End Date must be after today");
+                    MessageBox.error("End Date must be after today.");
                     return false;
                 }
             }
@@ -3039,7 +3077,7 @@ sap.ui.define([
                         modifiedAt: currentDateTime,
                         modifiedBy: sUserEmail,
                         toTypes: aCategories.map(typeId => ({
-                            typeId: typeId
+                            type: { typeId: typeId }
                         }))
                     };
 
@@ -3418,56 +3456,83 @@ sap.ui.define([
             const bIsEditMode = oWizardModel.getProperty("/isEditMode");
 
             if (bIsEditMode) {
+                // Edit Mode: Reset to original values
                 const sOriginalTitle = oWizardModel.getProperty("/originalTitle") || "";
                 const aOriginalAnnouncementType = oWizardModel.getProperty("/originalAnnouncementType") || [];
                 const aOriginalCategory = oWizardModel.getProperty("/originalCategory") || [];
                 const sOriginalDescription = oWizardModel.getProperty("/originalDescription") || "";
 
+                // ✅ FIX: Also reset publish-related fields to original values
+                const sOriginalPublishOption = oWizardModel.getProperty("/originalPublishOption") || "";
+                const sOriginalPublishStartDate = oWizardModel.getProperty("/originalPublishStartDate") || "";
+                const sOriginalPublishEndDate = oWizardModel.getProperty("/originalPublishEndDate") || "";
+
+                // Reset basic fields
                 oWizardModel.setProperty("/title", sOriginalTitle);
-                oWizardModel.setProperty("/announcementType", aOriginalAnnouncementType);
-                oWizardModel.setProperty("/category", aOriginalCategory);
+                oWizardModel.setProperty("/announcementType", [...aOriginalAnnouncementType]);
+                oWizardModel.setProperty("/category", [...aOriginalCategory]);
                 oWizardModel.setProperty("/description", sOriginalDescription);
-                // UPDATE RICHTEXTEDITOR VALUE
+
+                // ✅ FIX: Reset publish fields
+                oWizardModel.setProperty("/publishOption", sOriginalPublishOption);
+                oWizardModel.setProperty("/publishStartDate", sOriginalPublishStartDate);
+                oWizardModel.setProperty("/publishEndDate", sOriginalPublishEndDate);
+
+                // Reset date picker visibility and enabled states based on original publish option
+                const bHasPublishData = !!(sOriginalPublishOption && sOriginalPublishEndDate);
+                oWizardModel.setProperty("/showDatePickers", bHasPublishData);
+                oWizardModel.setProperty("/startDateEnabled", sOriginalPublishOption === "UNPUBLISH");
+                oWizardModel.setProperty("/endDateEnabled", bHasPublishData);
+
+                // Update RichTextEditor value
                 if (this._oRichTextEditor) {
                     this._oRichTextEditor.setValue(sOriginalDescription);
                 }
+
+                // Clear validation errors and validate step
+                this._clearValidationErrors(oWizardModel);
+                oWizardModel.setProperty("/singleCreateStepValidated", true);
+
+                const oStep = this.byId("singleCreateStep");
+                if (oStep) {
+                    oStep.setValidated(true);
+                }
+
+                MessageToast.show("Reset to original values");
             } else {
+                // Create Mode: Clear all fields
                 oWizardModel.setProperty("/title", "");
                 oWizardModel.setProperty("/announcementType", []);
                 oWizardModel.setProperty("/category", []);
                 oWizardModel.setProperty("/description", "");
-                // UPDATE RICHTEXTEDITOR VALUE
+
+                // ✅ FIX: Also clear publish fields
+                oWizardModel.setProperty("/publishOption", "");
+                oWizardModel.setProperty("/publishStartDate", "");
+                oWizardModel.setProperty("/publishEndDate", "");
+                oWizardModel.setProperty("/showDatePickers", false);
+                oWizardModel.setProperty("/startDateEnabled", false);
+                oWizardModel.setProperty("/endDateEnabled", false);
+
+                // Update RichTextEditor value
                 if (this._oRichTextEditor) {
                     this._oRichTextEditor.setValue("");
                 }
+
+                // Clear validation errors and invalidate step
+                this._clearValidationErrors(oWizardModel);
+                oWizardModel.setProperty("/singleCreateStepValidated", false);
+
+                const oStep = this.byId("singleCreateStep");
+                if (oStep) {
+                    oStep.setValidated(false);
+                }
+
+                MessageToast.show("Form has been reset");
             }
 
-            this._clearValidationErrors(oWizardModel);
-            oWizardModel.setProperty("/singleCreateStepValidated", bIsEditMode);
+            // Hide Reset button after reset
             oWizardModel.setProperty("/showResetButton", false);
-
-            if (bIsEditMode) {
-                this._setButtonVisibility({
-                    showReviewButton: true,
-                    showUpdateButton: false,
-                    showSubmitButton: false,
-                    showResetButton: false
-                });
-            } else {
-                this._setButtonVisibility({
-                    showReviewButton: true,
-                    showUpdateButton: false,
-                    showSubmitButton: false,
-                    showResetButton: false
-                });
-            }
-
-            const oStep = this.byId("singleCreateStep");
-            if (oStep && bIsEditMode) {
-                oStep.setValidated(true);
-            }
-
-            MessageToast.show(bIsEditMode ? "Reset to original values" : "Form has been reset");
         },
 
         /* ========================================

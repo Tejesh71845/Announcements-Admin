@@ -30,7 +30,7 @@
                     <OverflowToolbar design="Transparent">
                         <ToolbarSpacer />
                         <Button
-                            text="Create Announcement"
+                            text="{i18n>createButton}"
                             type="Emphasized"
                             icon="sap-icon://add"
                             press="onCreatePress"
@@ -61,7 +61,7 @@
                             </customData>
                         </Column> -->
                         <Column>
-                            <Text text="Created On" />
+                            <Text text="{i18n>createdOnColumn}" />
                             <customData>
                                 <core:CustomData
                                     key="p13nData"
@@ -71,7 +71,7 @@
                         </Column>
 
                         <Column>
-                            <Text text="Modified On" />
+                            <Text text="{i18n>modifiedOnColumn}" />
                             <customData>
                                 <core:CustomData
                                     key="p13nData"
@@ -81,7 +81,7 @@
                         </Column>
 
                         <Column>
-                            <Text text="Published On" />
+                            <Text text="{i18n>publishedOnColumn}" />
                             <customData>
                                 <core:CustomData
                                     key="p13nData"
@@ -91,7 +91,7 @@
                         </Column>
 
                         <Column>
-                            <Text text="Status" />
+                            <Text text="{i18n>statusColumn}" />
                             <customData>
                                 <core:CustomData
                                     key="p13nData"
@@ -100,7 +100,7 @@
                             </customData>
                         </Column>
                         <Column>
-                            <Text text="Actions" />
+                            <Text text="{i18n>actionsColumn}" />
                             <customData>
                                 <core:CustomData
                                     key="p13nData"
