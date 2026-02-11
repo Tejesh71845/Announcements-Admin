@@ -6,7 +6,7 @@
     xmlns:table="sap.ui.table"
 >
     <Dialog
-        id="createWizardDialog"
+        id="idCreateAnnouncementDlg"
         title="{= ${wizardModel>/isEditMode} ? ${i18n>wizardTitleEdit} : ${i18n>wizardTitle}}"
         contentWidth="100%"
         resizable="false"
@@ -36,7 +36,7 @@
                  SINGLE ENTRY WIZARD
                  ======================================== -->
             <Wizard
-                id="singleWizard"
+                id="idSingleEntryWzrd"
                 enableBranching="false"
                 showNextButton="false"
                 visible="{wizardModel>/showSingleWizard}"
@@ -44,7 +44,7 @@
             >
                 <!-- Step 1 -->
                 <WizardStep
-                    id="singleSelectionStep"
+                    id="idSingleSelectionWzrdStp"
                     title="{i18n>selectOptionTitle}"
                     validated="false"
                     icon="sap-icon://home"
@@ -93,7 +93,7 @@
 
                 <!-- Step 2 -->
                 <WizardStep
-                    id="singleCreateStep"
+                    id="idSingleCreateWzrdStp"
                     title="{= ${wizardModel>/isEditMode} ? ${i18n>wizardTitleEdit} : ${i18n>wizardTitle}}"
                     validated="{wizardModel>/singleCreateStepValidated}"
                     icon="{= ${wizardModel>/isEditMode} ? 'sap-icon://edit' : 'sap-icon://add'}"
@@ -112,7 +112,7 @@
                                         required="{= !${wizardModel>/isDraftMode}}"
                                     />
                                     <Input
-                                        id="singleTitleInput"
+                                        id="idTitleFld"
                                         value="{wizardModel>/title}"
                                         placeholder="{i18n>titlePlaceholder}"
                                         valueState="{wizardModel>/titleValueState}"
@@ -126,7 +126,7 @@
                                         required="{= !${wizardModel>/isDraftMode}}"
                                     />
                                     <MultiComboBox
-                                        id="singleAnnouncementTypeMultiComboBox"
+                                        id="idAnnouncementTypeMCB"
                                         selectedKeys="{wizardModel>/announcementType}"
                                         selectionChange="onSingleAnnouncementTypeSelectionChange"
                                         valueState="{wizardModel>/announcementTypeValueState}"
@@ -146,7 +146,7 @@
                                         required="false"
                                     />
                                     <MultiComboBox
-                                        id="singleCategoryMultiComboBox"
+                                        id="idCategoryMCB"
                                         selectedKeys="{wizardModel>/category}"
                                         selectionChange="onSingleCategorySelectionChange"
                                         valueState="{wizardModel>/categoryValueState}"
@@ -166,7 +166,7 @@
                                         required="{= !${wizardModel>/isDraftMode}}"
                                     />
                                     <VBox
-                                        id="richTextContainer"
+                                        id="idRichTextCntr"
                                         width="100%"
                                         class="sapUiNoMargin"
                                     />
@@ -192,14 +192,14 @@
                                         />
                                         <HBox>
                                             <RadioButton
-                                                id="publishPublishRadio"
+                                                id="idPublishNowRdo"
                                                 text="{i18n>publishNow}"
                                                 groupName="publishOptionGroup"
                                                 selected="{= ${wizardModel>/publishOption} === 'PUBLISH'}"
                                                 select="onPublishOptionRadioSelect"
                                             />
                                             <RadioButton
-                                                id="publishUnpublishRadio"
+                                                id="idPublishLaterRdo"
                                                 text="{i18n>publishLater}"
                                                 groupName="publishOptionGroup"
                                                 selected="{= ${wizardModel>/publishOption} === 'UNPUBLISH'}"
@@ -214,7 +214,7 @@
                                             required="{= !${wizardModel>/isDraftMode}}"
                                         />
                                         <DatePicker
-                                            id="publishStartDatePicker"
+                                            id="idStartDatePkr"
                                             value="{wizardModel>/publishStartDate}"
                                             valueState="{wizardModel>/publishStartDateValueState}"
                                             valueStateText="{wizardModel>/publishStartDateValueStateText}"
@@ -234,7 +234,7 @@
                                             required="{= !${wizardModel>/isDraftMode}}"
                                         />
                                         <DatePicker
-                                            id="publishEndDatePicker"
+                                            id="idEndDatePkr"
                                             value="{wizardModel>/publishEndDate}"
                                             valueState="{wizardModel>/publishEndDateValueState}"
                                             valueStateText="{wizardModel>/publishEndDateValueStateText}"
@@ -323,14 +323,14 @@
 
                                         <HBox>
                                             <RadioButton
-                                                id="publishPublishRadio"
+                                                id="idPublishNowRdo"
                                                 text="{i18n>publishNow}"
                                                 groupName="publishOptionGroup"
                                                 selected="{= ${wizardModel>/publishOption} === 'PUBLISH'}"
                                                 select="onPublishOptionRadioSelect"
                                             />
                                             <RadioButton
-                                                id="publishUnpublishRadio"
+                                                id="idPublishLaterRdo"
                                                 text="{i18n>publishLater}"
                                                 groupName="publishOptionGroup"
                                                 selected="{= ${wizardModel>/publishOption} === 'UNPUBLISH'}"
@@ -344,7 +344,7 @@
                                             visible="{wizardModel>/showDatePickers}"
                                         />
                                         <DatePicker
-                                            id="publishStartDatePicker"
+                                            id="idStartDatePkr"
                                             value="{wizardModel>/publishStartDate}"
                                             valueState="{wizardModel>/publishStartDateValueState}"
                                             valueStateText="{wizardModel>/publishStartDateValueStateText}"
@@ -363,7 +363,7 @@
                                             visible="{wizardModel>/showDatePickers}"
                                         />
                                         <DatePicker
-                                            id="publishEndDatePicker"
+                                            id="idEndDatePkr"
                                             value="{wizardModel>/publishEndDate}"
                                             valueState="{wizardModel>/publishEndDateValueState}"
                                             valueStateText="{wizardModel>/publishEndDateValueStateText}"
@@ -395,7 +395,7 @@
                  BULK UPLOAD WIZARD
                  ======================================== -->
             <Wizard
-                id="bulkWizard"
+                id="idBulkUploadWzrd"
                 complete="onWizardComplete"
                 enableBranching="false"
                 showNextButton="false"
@@ -404,7 +404,7 @@
             >
                 <!-- Step 1: Selection Option (BULK flow) -->
                 <WizardStep
-                    id="bulkSelectionStep"
+                    id="idBulkSelectionWzrdStp"
                     title="Select Option"
                     validated="false"
                     icon="sap-icon://home"
@@ -451,8 +451,8 @@
 
                 <!-- Step 2: Download Template (BULK flow) -->
                 <WizardStep
-                    id="bulkDownloadStep"
-                    title="Download Template"
+                    id="idBulkDownloadWzrdStp"
+                    title="{i18n>bulkDownloadStepTitle}"
                     validated="{wizardModel>/bulkDownloadStepValidated}"
                     icon="sap-icon://download"
                     activate="onBulkDownloadStepActivate"
@@ -463,12 +463,12 @@
                             alignItems="Center"
                         >
                             <Title
-                                text="Download Template File"
+                                text="{i18n>bulkDownloadTemplateTitle}"
                                 level="H3"
                                 class="sapUiMediumMarginBottom"
                             />
                             <Text
-                                text="Download the Excel template file to fill in your announcements data"
+                                text="{i18n>bulkDownloadTemplateText}"
                                 class="sapUiMediumMarginBottom"
                                 textAlign="Center"
                             />
@@ -478,7 +478,7 @@
                                 class="sapUiLargeMarginTop"
                             >
                                 <Button
-                                    text="Download Template"
+                                    text="{i18n>bulkDownloadTemplateBtn}"
                                     press="onDownloadTemplatePress"
                                     type="Emphasized"
                                     icon="sap-icon://download"
@@ -504,8 +504,8 @@
 
                 <!-- Step 3: Upload Template (BULK flow) -->
                 <WizardStep
-                    id="bulkUploadStep"
-                    title="Upload Template"
+                    id="idBulkUploadWzrdStp"
+                    title="{i18n>bulkUploadStepTitle}"
                     validated="{wizardModel>/bulkUploadStepValidated}"
                     icon="sap-icon://upload"
                     activate="onBulkUploadStepActivate"
@@ -516,12 +516,12 @@
                             alignItems="Center"
                         >
                             <Title
-                                text="Upload Filled Template"
+                                text="{i18n>bulkUploadTemplateTitle}"
                                 level="H3"
                                 class="sapUiMediumMarginBottom"
                             />
                             <Text
-                                text="Upload your filled Excel template file"
+                                text="{i18n>bulkUploadTemplateText}"
                                 class="sapUiMediumMarginBottom"
                                 textAlign="Center"
                             />
@@ -531,7 +531,7 @@
                                 class="sapUiLargeMarginTop"
                             >
                                 <Button
-                                    text="Upload Template"
+                                    text="{i18n>bulkUploadTemplateBtn}"
                                     press="onUploadTemplatePress"
                                     type="Emphasized"
                                     icon="sap-icon://upload"
@@ -557,8 +557,8 @@
 
                 <!-- Step 4: Review (BULK flow) - UPDATED -->
                 <WizardStep
-                    id="bulkReviewStep"
-                    title="Review"
+                    id="idBulkReviewWzrdStp"
+                    title="{i18n>bulkReviewStepTitle}"
                     validated="true"
                     icon="sap-icon://to-be-reviewed"
                     activate="onBulkReviewStepActivate"
@@ -566,12 +566,12 @@
                     <content>
                         <VBox class="sapUiMediumMargin">
                             <Title
-                                text="Review Bulk Upload"
+                                text="{i18n>bulkReviewTitle}"
                                 level="H3"
                                 class="sapUiMediumMarginBottom"
                             />
                             <Text
-                                text="Review and edit your announcements before publishing. Click on any cell to edit."
+                                text="{i18n>bulkReviewText}"
                                 class="sapUiMediumMarginBottom"
                                 textAlign="Center"
                             />
@@ -588,7 +588,7 @@
 
                             <!-- Editable Review Table -->
                             <table:Table
-                                id="bulkReviewTable"
+                                id="idBulkReviewTbl"
                                 rows="{wizardModel>/bulkData}"
                                 selectionMode="None"
                                 visibleRowCount="{= Math.min(${wizardModel>/bulkData}.length, 10) }"
@@ -612,23 +612,27 @@
 
                                 <table:columns>
                                     <table:Column width="200px">
-                                        <Label text="Title*" />
+                                        <Label
+                                            text="{i18n>bulkTitleColumnHeader}"
+                                        />
                                         <table:template>
                                             <Input
                                                 value="{wizardModel>title}"
                                                 change="onBulkTableInputChange"
-                                                placeholder="Enter title"
+                                                placeholder="{i18n>bulkTitlePlaceholder}"
                                             />
                                         </table:template>
                                     </table:Column>
 
                                     <table:Column width="150px">
-                                        <Label text="Announcement Type*" />
+                                        <Label
+                                            text="{i18n>bulkAnnouncementTypeColumnHeader}"
+                                        />
                                         <table:template>
                                             <Input
                                                 value="{wizardModel>announcementType}"
                                                 change="onBulkTableInputChange"
-                                                placeholder="e.g., Global, Emergency"
+                                                placeholder="{i18n>bulkAnnouncementTypePlaceholder}"
                                             />
                                         </table:template>
                                     </table:Column>
@@ -702,7 +706,7 @@
 
         <buttons>
             <Button
-                id="cancelButtonReview"
+                id="idCancelBtn"
                 text="{i18n>cancelButton}"
                 press="onCancelPress"
                 type="Transparent"
@@ -711,7 +715,7 @@
             />
 
             <Button
-                id="resetButton"
+                id="idResetBtn"
                 text="{i18n>resetButton}"
                 press="onResetPress"
                 type="Transparent"
@@ -730,7 +734,7 @@
             /> -->
 
             <Button
-                id="submitButton"
+                id="idSubmitBtn"
                 text="{i18n>submitButton}"
                 type="Emphasized"
                 press="onSubmitPress"

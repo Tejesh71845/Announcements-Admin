@@ -1,39 +1,39 @@
 /* Enter your custom styles here */
 
-.hideFirstWizardStep .sapMWizardProgressNavStep:first-child {
+.hideFirstWizardStepCss .sapMWizardProgressNavStep:first-child {
     display: none !important;
 }
 
-.hideFirstWizardStep .sapMWizardProgressNav {
+.hideFirstWizardStepCss .sapMWizardProgressNav {
     padding-left: 0;
 }
 
-.richTextError {
+.richTextErrorCss {
     border: 2px solid #bb0000 !important;
     border-radius: 4px;
 }
 
-.richTextError .sapUiRTE {
+.richTextErrorCss .sapUiRTE {
     margin: -2px;
 }
 
 
-.smartTableWithBorder {
+.smartTableBorderCss {
     border: none;
 }
 
-.smartTableWithBorder .sapMListTbl {
+.smartTableBorderCss .sapMListTbl {
     border: 1px solid #d9d9d9;
     border-radius: 4px;
     overflow: hidden;
 }
 
-.smartTableWithBorder .sapMListTbl tbody tr td {
+.smartTableBorderCss .sapMListTbl tbody tr td {
     border-left: none !important;
     border-right: none !important;
 }
 
-.sapMMessageToast{
+.messageToastCss{
     max-width: 25rem !important;
 }
 

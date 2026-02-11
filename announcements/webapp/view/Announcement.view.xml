@@ -10,7 +10,7 @@
     <f:DynamicPage headerExpanded="true">
         <f:content>
             <smartTable:SmartTable
-                id="announcementsSmartTable"
+                id="idAnnouncementsSmartTbl"
                 entitySet="Announcements"
                 tableType="ResponsiveTable"
                 enableAutoBinding="true"
@@ -18,9 +18,10 @@
                 useTablePersonalisation="true"
                 header="Announcements"
                 showRowCount="true"
-                enableExport="true"
+                enableCopy="false"
+                enableExport="false"
                 demandPopin="true"
-                class="sapUiResponsiveContentPadding smartTableWithBorder"
+                class="sapUiResponsiveContentPadding smartTableBorderCss"
                 beforeRebindTable="onBeforeRebindTable"
                 enableAutoColumnWidth="true"
                 placeToolbarInTable="true"
@@ -29,18 +30,19 @@
                 <smartTable:customToolbar>
                     <OverflowToolbar design="Transparent">
                         <ToolbarSpacer />
+                        <SearchField width="20%" class="sapUiSmallMargin" />
                         <Button
                             text="{i18n>createButton}"
                             type="Emphasized"
                             icon="sap-icon://add"
                             press="onCreatePress"
                         />
-                        <Button
+                        <!-- <Button
                             icon="sap-icon://refresh"
                             type="Transparent"
                             tooltip="Refresh"
                             press="onRefreshPress"
-                        />
+                        /> -->
                     </OverflowToolbar>
                 </smartTable:customToolbar>
                 <smartTable:layoutData>
@@ -56,16 +58,36 @@
                             <customData>
                                 <core:CustomData
                                     key="p13nData"
-                                    value="{'columnKey': 'category', 'columnIndex': '1', 'leadingProperty': 'category'}"
+                                    value="{'columnKey': 'toTypes/type/name', 'columnIndex': '1', 'leadingProperty': 'toTypes/type/name'}"
                                 />
                             </customData>
                         </Column> -->
-                        <Column>
+                        <!-- <Column>
                             <Text text="{i18n>createdOnColumn}" />
                             <customData>
                                 <core:CustomData
                                     key="p13nData"
                                     value="{'columnKey': 'createdAt', 'columnIndex': '2', 'leadingProperty': 'createdAt'}"
+                                />
+                            </customData>
+                        </Column> -->
+
+                        <Column>
+                            <Text text="{i18n>publishedOnColumn}" />
+                            <customData>
+                                <core:CustomData
+                                    key="p13nData"
+                                    value="{'columnKey': 'publishedAt', 'columnIndex': '3', 'leadingProperty': 'publishedAt'}"
+                                />
+                            </customData>
+                        </Column>
+
+                        <Column>
+                            <Text text="{i18n>expiredOnColumn}" />
+                            <customData>
+                                <core:CustomData
+                                    key="p13nData"
+                                    value="{'columnKey': 'endAnnouncement', 'columnIndex': '4', 'leadingProperty': 'endAnnouncement'}"
                                 />
                             </customData>
                         </Column>
@@ -75,17 +97,7 @@
                             <customData>
                                 <core:CustomData
                                     key="p13nData"
-                                    value="{'columnKey': 'modifiedAt', 'columnIndex': '3', 'leadingProperty': 'modifiedAt'}"
-                                />
-                            </customData>
-                        </Column>
-
-                        <Column>
-                            <Text text="{i18n>publishedOnColumn}" />
-                            <customData>
-                                <core:CustomData
-                                    key="p13nData"
-                                    value="{'columnKey': 'publishedAt', 'columnIndex': '4', 'leadingProperty': 'publishedAt'}"
+                                    value="{'columnKey': 'modifiedAt', 'columnIndex': '5', 'leadingProperty': 'modifiedAt'}"
                                 />
                             </customData>
                         </Column>
@@ -95,7 +107,7 @@
                             <customData>
                                 <core:CustomData
                                     key="p13nData"
-                                    value="{'columnKey': 'announcementStatus', 'columnIndex': '5', 'leadingProperty': 'announcementStatus'}"
+                                    value="{'columnKey': 'announcementStatus', 'columnIndex': '6', 'leadingProperty': 'announcementStatus'}"
                                 />
                             </customData>
                         </Column>
@@ -118,9 +130,23 @@
                                         formatter: '.formatCategoryNames'
                                     }"
                                 /> -->
-                                <Text
+                                <!-- <Text
                                     text="{
                                             path: 'createdAt',
+                                            formatter: '.formatDateOnly'
+                                        }"
+                                /> -->
+
+                                <Text
+                                    text="{
+                                            path: 'publishedAt',
+                                            formatter: '.formatDateOnly'
+                                        }"
+                                />
+
+                                <Text
+                                    text="{
+                                            path: 'endAnnouncement',
                                             formatter: '.formatDateOnly'
                                         }"
                                 />
@@ -128,13 +154,6 @@
                                 <Text
                                     text="{
                                             path: 'modifiedAt',
-                                            formatter: '.formatDateOnly'
-                                        }"
-                                />
-
-                                <Text
-                                    text="{
-                                            path: 'publishedAt',
                                             formatter: '.formatDateOnly'
                                         }"
                                 />
@@ -150,12 +169,22 @@
                                         }"
                                 />
 
-                                <HBox justifyContent="Center">
+                                <HBox>
                                     <Button
                                         icon="sap-icon://edit"
                                         type="Transparent"
                                         tooltip="Edit"
                                         press="onEditPress"
+                                    />
+                                    <Button
+                                        icon="sap-icon://duplicate"
+                                        type="Transparent"
+                                        tooltip="Duplicate"
+                                    />
+                                    <Button
+                                        icon="sap-icon://sys-minus"
+                                        type="Transparent"
+                                        tooltip="Mark As Invalid"
                                     />
                                     <Button
                                         icon="sap-icon://delete"

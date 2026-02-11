@@ -18,21 +18,29 @@
                             <PropertyValue Property="Value" Path="announcementType"/>
                         </Record>
                         <Record Type="com.sap.vocabularies.UI.v1.DataField">
+                            <PropertyValue Property="Label" String="Publish Date"/>
+                            <PropertyValue Property="Value" Path="publishedAt"/>
+                        </Record>
+                        <Record Type="com.sap.vocabularies.UI.v1.DataField">
+                            <PropertyValue Property="Label" String="Expiry Date"/>
+                            <PropertyValue Property="Value" Path="endAnnouncement"/>
+                        </Record>               
+                        <Record Type="com.sap.vocabularies.UI.v1.DataField">
+                            <PropertyValue Property="Label" String="Modified By"/>
+                            <PropertyValue Property="Value" Path="modifiedBy"/>
+                        </Record>
+                        <Record Type="com.sap.vocabularies.UI.v1.DataField">
+                            <PropertyValue Property="Label" String="Modified On"/>
+                            <PropertyValue Property="Value" Path="modifiedAt"/>
+                        </Record>
+                        <!-- <Record Type="com.sap.vocabularies.UI.v1.DataField">
                             <PropertyValue Property="Label" String="Created On"/>
                             <PropertyValue Property="Value" Path="createdAt"/>
                         </Record>
                         <Record Type="com.sap.vocabularies.UI.v1.DataField">
                             <PropertyValue Property="Label" String="Created By"/>
                             <PropertyValue Property="Value" Path="createdBy"/>
-                        </Record>
-                        <Record Type="com.sap.vocabularies.UI.v1.DataField">
-                            <PropertyValue Property="Label" String="Modified On"/>
-                            <PropertyValue Property="Value" Path="modifiedAt"/>
-                        </Record>
-                        <Record Type="com.sap.vocabularies.UI.v1.DataField">
-                            <PropertyValue Property="Label" String="Modified By"/>
-                            <PropertyValue Property="Value" Path="modifiedBy"/>
-                        </Record>
+                        </Record> -->
                         <!-- <Record Type="com.sap.vocabularies.UI.v1.DataField">
                             <PropertyValue Property="Label" String="Start Date"/>
                             <PropertyValue Property="Value" Path="startAnnouncement"/>
@@ -41,14 +49,10 @@
                             <PropertyValue Property="Label" String="End Date"/>
                             <PropertyValue Property="Value" Path="endAnnouncement"/>
                         </Record> -->
-                        <Record Type="com.sap.vocabularies.UI.v1.DataField">
-                            <PropertyValue Property="Label" String="Published On"/>
-                            <PropertyValue Property="Value" Path="publishedAt"/>    
-                        </Record>
-                        <Record Type="com.sap.vocabularies.UI.v1.DataField">
+                        <!-- <Record Type="com.sap.vocabularies.UI.v1.DataField">
                             <PropertyValue Property="Label" String="Published By"/>
                             <PropertyValue Property="Value" Path="publishedBy"/>
-                        </Record>
+                        </Record> -->
                         <Record Type="com.sap.vocabularies.UI.v1.DataField">
                             <PropertyValue Property="Label" String="Status"/>
                             <PropertyValue Property="Value" Path="announcementStatus"/>

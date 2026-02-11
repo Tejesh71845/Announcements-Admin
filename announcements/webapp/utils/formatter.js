@@ -122,6 +122,22 @@ sap.ui.define([], function () {
             const year = date.getFullYear();
 
             return `${month}/${day}/${year}`;
+        },
+
+        formatCategoryNames: function (aToTypes) {
+
+            console.log("Formatter received:", aToTypes);
+            if (!aToTypes || !Array.isArray(aToTypes)) {
+                return "";
+            }
+
+            // Extract names directly from the type objects
+            const aCategoryNames = aToTypes
+                .map(oItem => oItem.type && oItem.type.name)  // Get the name directly
+                .filter(Boolean);  // Remove any undefined/null values
+
+            return aCategoryNames.join(", ");
         }
+
     };
 });

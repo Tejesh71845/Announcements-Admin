@@ -33,7 +33,7 @@ sap.ui.define([
             this._oWizardDialog = null;
             this._oRichTextEditor = null;
 
-            var oAnnouncementsSmartTable = this.getView().byId("announcementsSmartTable");
+            var oAnnouncementsSmartTable = this.getView().byId("idAnnouncementsSmartTbl");
             oAnnouncementsSmartTable.setModel(oAnnouncementModel);
         },
 
@@ -56,7 +56,7 @@ sap.ui.define([
         },
 
         refreshSmartTable: function () {
-            const oSmartTable = this.byId("announcementsSmartTable");
+            const oSmartTable = this.byId("idAnnouncementsSmartTbl");
             const oModel = this.getOwnerComponent().getModel("announcementModel");
 
             console.log("Refreshing SmartTable...");
@@ -286,7 +286,7 @@ sap.ui.define([
 
                     console.log("Categories loaded:", aDropdownData.length);
 
-                    const oSmartTable = this.byId("announcementsSmartTable");
+                    const oSmartTable = this.byId("idAnnouncementsSmartTbl");
                     if (oSmartTable) {
                         oSmartTable.rebindTable();
                     }
@@ -700,9 +700,9 @@ sap.ui.define([
                     emphasizedAction: MessageBox.Action.NO,
                     onClose: (oAction) => {
                         if (oAction === MessageBox.Action.YES) {
-                            const oWizard = this.byId("singleWizard");
+                            const oWizard = this.byId("idSingleEntryWzrd");
                             if (oWizard) {
-                                oWizard.removeStyleClass("hideFirstWizardStep");
+                                oWizard.removeStyleClass("hideFirstWizardStepCss");
                             }
 
                             // CLEANUP BOTH RICHTEXTEDITORS
@@ -729,8 +729,8 @@ sap.ui.define([
          * ======================================== */
 
         _resetWizards: function () {
-            this._resetWizard("singleWizard", "singleSelectionStep");
-            this._resetWizard("bulkWizard", "bulkSelectionStep");
+            this._resetWizard("idSingleEntryWzrd", "idSingleSelectionWzrdStp");
+            this._resetWizard("idBulkUploadWzrd", "idBulkSelectionWzrdStp");
         },
 
         _resetWizard: function (sWizardId, sStepId) {
@@ -744,14 +744,14 @@ sap.ui.define([
         },
 
         _forceWizardRerender: function () {
-            ["singleWizard", "bulkWizard"].forEach(sWizardId => {
+            ["idSingleEntryWzrd", "idBulkUploadWzrd"].forEach(sWizardId => {
                 const oWizard = this.byId(sWizardId);
                 if (oWizard) oWizard.invalidate();
             });
         },
 
         _refreshWizardContent: function () {
-            ["singleTitleInput", "singleAnnouncementTypeMultiComboBox", "singleCategoryMultiComboBox", "singleDescriptionTextArea"].forEach(sInputId => {
+            ["idTitleFld", "idAnnouncementTypeMCB", "idCategoryMCB", "singleDescriptionTextArea"].forEach(sInputId => {
                 const oInput = this.byId(sInputId);
                 if (oInput) oInput.rerender();
             });
@@ -780,10 +780,10 @@ sap.ui.define([
                 showUpdateButton: false
             });
 
-            const oStep = this.byId("singleSelectionStep");
+            const oStep = this.byId("idSingleSelectionWzrdStp");
             if (oStep) oStep.setValidated(true);
 
-            const oWizard = this.byId("singleWizard");
+            const oWizard = this.byId("idSingleEntryWzrd");
             if (oWizard) {
                 oWizard.attachComplete(() => {
                     oWizardModel.setProperty("/showSubmitButton", true);
@@ -814,8 +814,8 @@ sap.ui.define([
             setTimeout(() => {
                 this._forceWizardRerender();
 
-                const oBulkWizard = this.byId("bulkWizard");
-                const oBulkSelectionStep = this.byId("bulkSelectionStep");
+                const oBulkWizard = this.byId("idBulkUploadWzrd");
+                const oBulkSelectionStep = this.byId("idBulkSelectionWzrdStp");
                 if (oBulkSelectionStep) oBulkSelectionStep.setValidated(true);
                 if (oBulkWizard) {
                     setTimeout(() => {
@@ -831,7 +831,7 @@ sap.ui.define([
             const bIsEditMode = oWizardModel.getProperty("/isEditMode");
 
             setTimeout(() => {
-                this._initRichTextEditor("richTextContainer");
+                this._initRichTextEditor("idRichTextCntr");
             }, bIsEditMode ? 200 : 100);
 
             // Show buttons for create/edit step - Reset button will be shown when user makes changes
@@ -1000,9 +1000,9 @@ sap.ui.define([
                 oWizardModel.setProperty("/descriptionValueStateText", "Description is required");
 
                 // Add red border to RichTextEditor container
-                const oContainer = this.byId("richTextContainer");
+                const oContainer = this.byId("idRichTextCntr");
                 if (oContainer) {
-                    oContainer.addStyleClass("richTextError");
+                    oContainer.addStyleClass("richTextErrorCss");
                 }
                 bValid = false;
             } else {
@@ -1010,9 +1010,9 @@ sap.ui.define([
                 oWizardModel.setProperty("/descriptionValueStateText", "");
 
                 // Remove red border
-                const oContainer = this.byId("richTextContainer");
+                const oContainer = this.byId("idRichTextCntr");
                 if (oContainer) {
-                    oContainer.removeStyleClass("richTextError");
+                    oContainer.removeStyleClass("richTextErrorCss");
                 }
             }
 
@@ -1148,12 +1148,12 @@ sap.ui.define([
             oWizardModel.setProperty("/descriptionValueStateText", bValid ? "" : "Description is required");
 
             // Visual feedback using CSS class instead of valueState
-            const oContainer = this.byId("richTextContainer");
+            const oContainer = this.byId("idRichTextCntr");
             if (oContainer) {
                 if (!bValid) {
-                    oContainer.addStyleClass("richTextError");
+                    oContainer.addStyleClass("richTextErrorCss");
                 } else {
-                    oContainer.removeStyleClass("richTextError");
+                    oContainer.removeStyleClass("richTextErrorCss");
                 }
             }
 
@@ -1168,7 +1168,7 @@ sap.ui.define([
 
             oWizardModel.setProperty("/singleCreateStepValidated", bOverallValid);
 
-            const oStep = this.byId("singleCreateStep");
+            const oStep = this.byId("idSingleCreateWzrdStp");
             if (oStep) {
                 oStep.setValidated(bOverallValid);
             }
@@ -1235,7 +1235,7 @@ sap.ui.define([
         _updateInputValue: function (oSource, sValue, oWizardModel) {
             const sId = oSource.getId();
 
-            if (sId.indexOf("singleTitleInput") > -1) {
+            if (sId.indexOf("idTitleFld") > -1) {
                 oWizardModel.setProperty("/title", sValue);
             } else if (sId.indexOf("singleDescriptionTextArea") > -1) {
                 oWizardModel.setProperty("/description", sValue);
@@ -1249,7 +1249,7 @@ sap.ui.define([
             let sValue = "";
 
             switch (sId) {
-                case this.createId("singleTitleInput"):
+                case this.createId("idTitleFld"):
                     sFieldKey = "title";
                     sErrorMessage = "Title is required";
                     sValue = (oWizardModel.getProperty("/title") || "").trim();
@@ -1276,7 +1276,7 @@ sap.ui.define([
             const bOverallValid = sTitle && aAnnouncementType.length > 0 && sDescription;
 
             oWizardModel.setProperty("/singleCreateStepValidated", !!bOverallValid);
-            const oStep = this.byId("singleCreateStep");
+            const oStep = this.byId("idSingleCreateWzrdStp");
             if (oStep) oStep.setValidated(!!bOverallValid);
         },
 
@@ -1299,7 +1299,7 @@ sap.ui.define([
             const bOverallValid = sTitle && bValid && sDescription;
             oWizardModel.setProperty("/singleCreateStepValidated", !!bOverallValid);
 
-            const oStep = this.byId("singleCreateStep");
+            const oStep = this.byId("idSingleCreateWzrdStp");
             if (oStep) oStep.setValidated(!!bOverallValid);
         },
 
@@ -1316,7 +1316,7 @@ sap.ui.define([
             const bOverallValid = sTitle && aAnnouncementType.length > 0 && sDescription;
             oWizardModel.setProperty("/singleCreateStepValidated", !!bOverallValid);
 
-            const oStep = this.byId("singleCreateStep");
+            const oStep = this.byId("idSingleCreateWzrdStp");
             if (oStep) oStep.setValidated(!!bOverallValid);
         },
 
@@ -1471,12 +1471,12 @@ sap.ui.define([
                 });
             }
 
-            const oWizard = this.byId("singleWizard");
+            const oWizard = this.byId("idSingleEntryWzrd");
             const oReviewStep = this.byId("singleReviewStep");
 
             if (oWizard && oReviewStep) {
                 // Validate the create step before proceeding
-                const oCreateStep = this.byId("singleCreateStep");
+                const oCreateStep = this.byId("idSingleCreateWzrdStp");
                 if (oCreateStep) {
                     oCreateStep.setValidated(true);
                 }
@@ -1501,9 +1501,9 @@ sap.ui.define([
 
             let sOption = "";
 
-            if (sId.indexOf("publishPublishRadio") > -1) {
+            if (sId.indexOf("idPublishNowRdo") > -1) {
                 sOption = "PUBLISH";
-            } else if (sId.indexOf("publishUnpublishRadio") > -1) {
+            } else if (sId.indexOf("idPublishLaterRdo") > -1) {
                 sOption = "UNPUBLISH";
             }
 
@@ -1685,7 +1685,7 @@ sap.ui.define([
             oWizardModel.setProperty("/singleCreateStepValidated", bOverallValid);
             oWizardModel.setProperty("/showValidationWarning", !bOverallValid);
 
-            const oStep = this.byId("singleCreateStep");
+            const oStep = this.byId("idSingleCreateWzrdStp");
             if (oStep) oStep.setValidated(bOverallValid);
 
             return bOverallValid;
@@ -1709,10 +1709,10 @@ sap.ui.define([
                 showUpdateButton: false
             });
 
-            const oStep = this.byId("bulkSelectionStep");
+            const oStep = this.byId("idBulkSelectionWzrdStp");
             if (oStep) oStep.setValidated(true);
 
-            const oWizard = this.byId("bulkWizard");
+            const oWizard = this.byId("idBulkUploadWzrd");
             if (oWizard) {
                 oWizard.attachComplete(() => {
                     // Submit button will be shown in Review step
@@ -1787,8 +1787,8 @@ sap.ui.define([
             setTimeout(() => {
                 this._forceWizardRerender();
 
-                const oSingleWizard = this.byId("singleWizard");
-                const oSingleSelectionStep = this.byId("singleSelectionStep");
+                const oSingleWizard = this.byId("idSingleEntryWzrd");
+                const oSingleSelectionStep = this.byId("idSingleSelectionWzrdStp");
                 if (oSingleSelectionStep) oSingleSelectionStep.setValidated(true);
                 if (oSingleWizard) {
                     setTimeout(() => {
@@ -1825,7 +1825,7 @@ sap.ui.define([
                 this._setDownloadStatus(oModel, "Downloaded", "Template downloaded successfully.", "Success");
                 MessageToast.show("Template downloaded successfully");
 
-                const oBulkWizard = this.byId("bulkWizard");
+                const oBulkWizard = this.byId("idBulkUploadWzrd");
                 if (oBulkWizard) {
                     setTimeout(() => oBulkWizard.nextStep(), 1000);
                 }
@@ -2274,7 +2274,7 @@ sap.ui.define([
 
             MessageToast.show(`Excel file uploaded successfully! ${bulkData.length} record(s) loaded.`);
 
-            const oBulkWizard = this.byId("bulkWizard");
+            const oBulkWizard = this.byId("idBulkUploadWzrd");
             if (oBulkWizard) {
                 setTimeout(() => {
                     oBulkWizard.nextStep();
@@ -2445,9 +2445,9 @@ sap.ui.define([
         _ensureWizardContentVisible: function () {
             // Force revalidation of all input controls
             const aInputIds = [
-                "singleTitleInput",
-                "singleAnnouncementTypeMultiComboBox",
-                "singleCategoryMultiComboBox"
+                "idTitleFld",
+                "idAnnouncementTypeMCB",
+                "idCategoryMCB"
             ];
 
             aInputIds.forEach(sInputId => {
@@ -2458,7 +2458,7 @@ sap.ui.define([
             });
 
             // Force revalidation of the rich text container
-            const oContainer = this.byId("richTextContainer");
+            const oContainer = this.byId("idRichTextCntr");
             if (oContainer) {
                 oContainer.invalidate();
             }
@@ -2479,9 +2479,9 @@ sap.ui.define([
 
         _setupSingleWizardForEdit: function () {
             const oWizardModel = this.getView().getModel("wizardModel");
-            const oWizard = this.byId("singleWizard");
-            const oSelectionStep = this.byId("singleSelectionStep");
-            const oCreateStep = this.byId("singleCreateStep");
+            const oWizard = this.byId("idSingleEntryWzrd");
+            const oSelectionStep = this.byId("idSingleSelectionWzrdStp");
+            const oCreateStep = this.byId("idSingleCreateWzrdStp");
 
             if (!oWizard || !oCreateStep || !oSelectionStep) {
                 console.error("Wizard or steps not found");
@@ -2518,7 +2518,7 @@ sap.ui.define([
                     const sDescription = oWizardModel.getProperty("/description") || "";
                     console.log("Initializing RTE with description:", sDescription);
 
-                    this._initRichTextEditor("richTextContainer");
+                    this._initRichTextEditor("idRichTextCntr");
 
                     // Verify RTE was created and has the right value
                     if (this._oRichTextEditor) {
@@ -2748,9 +2748,9 @@ sap.ui.define([
             return true;
         },
         // onCancelPress: function () {
-        //     const oWizard = this.byId("singleWizard");
+        //     const oWizard = this.byId("idSingleEntryWzrd");
         //     if (oWizard) {
-        //         oWizard.removeStyleClass("hideFirstWizardStep");
+        //         oWizard.removeStyleClass("hideFirstWizardStepCss");
         //     }
 
         //     // CLEANUP BOTH RICHTEXTEDITORS
@@ -3096,9 +3096,9 @@ sap.ui.define([
                                 success: (oResponse) => {
                                     oBusy.close();
 
-                                    const oWizard = this.byId("singleWizard");
+                                    const oWizard = this.byId("idSingleEntryWzrd");
                                     if (oWizard) {
-                                        oWizard.removeStyleClass("hideFirstWizardStep");
+                                        oWizard.removeStyleClass("hideFirstWizardStepCss");
                                     }
 
                                     this._editContext = null;
@@ -3493,7 +3493,7 @@ sap.ui.define([
                 this._clearValidationErrors(oWizardModel);
                 oWizardModel.setProperty("/singleCreateStepValidated", true);
 
-                const oStep = this.byId("singleCreateStep");
+                const oStep = this.byId("idSingleCreateWzrdStp");
                 if (oStep) {
                     oStep.setValidated(true);
                 }
@@ -3523,7 +3523,7 @@ sap.ui.define([
                 this._clearValidationErrors(oWizardModel);
                 oWizardModel.setProperty("/singleCreateStepValidated", false);
 
-                const oStep = this.byId("singleCreateStep");
+                const oStep = this.byId("idSingleCreateWzrdStp");
                 if (oStep) {
                     oStep.setValidated(false);
                 }
@@ -3608,7 +3608,7 @@ sap.ui.define([
 
                             // Add custom styling with padding to the toast
                             setTimeout(() => {
-                                const oToast = document.querySelector(".sapMMessageToast");
+                                const oToast = document.querySelector(".messageToastCss");
                                 if (oToast) {
                                     oToast.style.padding = "1.5rem 2rem";
                                     oToast.style.fontSize = "1rem";
