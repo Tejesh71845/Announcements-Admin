@@ -29,7 +29,9 @@
         "settings": {
           "odataVersion": "2.0",
           "localUri": "localService/metadata.xml",
-          "annotations": ["annotation0"]
+          "annotations": [
+            "annotation0"
+          ]
         }
       },
       "annotation0": {
@@ -121,12 +123,30 @@
           "pattern": "",
           "name": "Announcement",
           "target": "Announcement"
+        },
+        {
+          "pattern": "create-sidebar/:announcementId:",
+          "name": "CreateSidebarAnnouncement",
+          "target": "CreateSidebarAnnouncement"
+        },
+        {
+          "pattern": "create-banner/:announcementId:",
+          "name": "CreateBannerAnnouncement",
+          "target": "CreateBannerAnnouncement"
         }
       ],
       "targets": {
         "Announcement": {
           "viewId": "Announcement",
           "viewName": "Announcement"
+        },
+        "CreateSidebarAnnouncement": {
+          "viewId": "CreateSidebarAnnouncement",
+          "viewName": "CreateSidebarAnnouncement"
+        },
+        "CreateBannerAnnouncement": {
+          "viewId": "CreateBannerAnnouncement",
+          "viewName": "CreateBannerAnnouncement"
         }
       }
     },

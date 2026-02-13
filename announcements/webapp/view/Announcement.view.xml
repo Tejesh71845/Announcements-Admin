@@ -6,198 +6,212 @@
     xmlns:smartTable="sap.ui.comp.smarttable"
     xmlns:customData="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1"
     xmlns:f="sap.f"
+    displayBlock="true"
+    height="100%"
 >
-    <f:DynamicPage headerExpanded="true">
-        <f:content>
-            <smartTable:SmartTable
-                id="idAnnouncementsSmartTbl"
-                entitySet="Announcements"
-                tableType="ResponsiveTable"
-                enableAutoBinding="true"
-                useVariantManagement="true"
-                useTablePersonalisation="true"
-                header="Announcements"
-                showRowCount="true"
-                enableCopy="false"
-                enableExport="false"
-                demandPopin="true"
-                class="sapUiResponsiveContentPadding smartTableBorderCss"
-                beforeRebindTable="onBeforeRebindTable"
-                enableAutoColumnWidth="true"
-                placeToolbarInTable="true"
-                requestAtLeastFields="description,announcementStatus,announcementType"
-            >
-                <smartTable:customToolbar>
-                    <OverflowToolbar design="Transparent">
-                        <ToolbarSpacer />
-                        <SearchField width="20%" class="sapUiSmallMargin" />
-                        <Button
-                            text="{i18n>createButton}"
-                            type="Emphasized"
-                            icon="sap-icon://add"
-                            press="onCreatePress"
+    <!-- ShellBar at the top -->
+    <core:Fragment
+        fragmentName="com.incture.announcements.fragments.ShellBar"
+        type="XML"
+    />
+
+    <!-- Main Content -->
+
+    <smartTable:SmartTable
+        id="idAnnouncementsSmartTbl"
+        entitySet="Announcements"
+        tableType="ResponsiveTable"
+        enableAutoBinding="true"
+        useVariantManagement="true"
+        useTablePersonalisation="true"
+        header="Announcements"
+        showRowCount="true"
+        enableCopy="false"
+        enableExport="false"
+        demandPopin="true"
+        class="sapUiResponsiveMargin smartTableBorderCss"
+        beforeRebindTable="onBeforeRebindTable"
+        enableAutoColumnWidth="true"
+        placeToolbarInTable="true"
+        requestAtLeastFields="description,announcementStatus,announcementType"
+    >
+        <smartTable:customToolbar>
+            <OverflowToolbar design="Transparent">
+                <HBox>
+                    <ToggleButton text="All" />
+                    <ToggleButton text="Published" />
+                    <ToggleButton text="Scheduled" />
+                    <ToggleButton text="Expired" />
+                    <ToggleButton text="Invalid" />
+                </HBox>
+                <ToolbarSpacer />
+                <SearchField
+                    width="20%"
+                    class="sapUiSmallMargin"
+                />
+                <MenuButton
+                    id="idCreateAnnouncementMenuBtn"
+                    text="{i18n>createButton}"
+                    type="Emphasized"
+                    defaultAction="onCreateSidebarPress"
+                >
+                    <menu>
+                        <Menu>
+                            <MenuItem
+                                text="Create Sidebar Announcement"
+                                press="onCreateSidebarPress"
+                            />
+                            <MenuItem
+                                text="Create Banner Announcement"
+                                press="onCreateBannerPress"
+                            />
+                        </Menu>
+                    </menu>
+                </MenuButton>
+            </OverflowToolbar>
+        </smartTable:customToolbar>
+        <smartTable:layoutData>
+            <FlexItemData
+                growFactor="1"
+                baseSize="0%"
+            />
+        </smartTable:layoutData>
+        <Table
+            growing="true"
+            growingThreshold="10"
+        >
+            <columns>
+                <Column>
+                    <Text text="{i18n>publishedOnColumn}" />
+                    <customData>
+                        <core:CustomData
+                            key="p13nData"
+                            value="{'columnKey': 'publishedAt', 'columnIndex': '3', 'leadingProperty': 'publishedAt'}"
+                        />
+                    </customData>
+                </Column>
+
+                <Column>
+                    <Text text="{i18n>expiredOnColumn}" />
+                    <customData>
+                        <core:CustomData
+                            key="p13nData"
+                            value="{'columnKey': 'endAnnouncement', 'columnIndex': '4', 'leadingProperty': 'endAnnouncement'}"
+                        />
+                    </customData>
+                </Column>
+
+                <Column>
+                    <Text text="{i18n>modifiedOnColumn}" />
+                    <customData>
+                        <core:CustomData
+                            key="p13nData"
+                            value="{'columnKey': 'modifiedAt', 'columnIndex': '5', 'leadingProperty': 'modifiedAt'}"
+                        />
+                    </customData>
+                </Column>
+
+                <Column>
+                    <Text text="{i18n>statusColumn}" />
+                    <customData>
+                        <core:CustomData
+                            key="p13nData"
+                            value="{'columnKey': 'announcementStatus', 'columnIndex': '6', 'leadingProperty': 'announcementStatus'}"
+                        />
+                    </customData>
+                </Column>
+                <Column>
+                    <Text text="{i18n>actionsColumn}" />
+                    <customData>
+                        <core:CustomData
+                            key="p13nData"
+                            value="{'columnKey': 'Actions', 'columnIndex': '31', 'leadingProperty': 'Actions', 'sortProperty': 'Actions', 'filterProperty': 'Actions'}"
+                        />
+                    </customData>
+                </Column>
+            </columns>
+            <items>
+                <ColumnListItem type="Active">
+                    <cells>
+                        <Text
+                            text="{
+                                                path: 'publishedAt',
+                                                formatter: '.formatDateOnly'
+                                            }"
+                        />
+
+                        <Text
+                            text="{
+                                                path: 'endAnnouncement',
+                                                formatter: '.formatDateOnly'
+                                            }"
+                        />
+
+                        <Text
+                            text="{
+                                                path: 'modifiedAt',
+                                                formatter: '.formatDateOnly'
+                                            }"
+                        />
+
+                        <ObjectStatus
+                            text="{
+        path: 'announcementStatus',
+        formatter: '.formatStatusText'
+    }"
+                            state="{
+        path: 'announcementStatus',
+        formatter: '.formatStatusState'
+    }"
+                            icon="{
+        path: 'announcementStatus',
+        formatter: '.formatStatusIcon'
+    }"
                         />
                         <!-- <Button
-                            icon="sap-icon://refresh"
-                            type="Transparent"
-                            tooltip="Refresh"
-                            press="onRefreshPress"
+                            text="{
+        path: 'announcementStatus',
+        formatter: '.formatStatusText'
+    }"
+                            icon="{
+        path: 'announcementStatus',
+        formatter: '.formatStatusIcon'
+    }"
+                            type="{
+        path: 'announcementStatus',
+        formatter: '.formatStatusButtonType'
+    }"
+                            enabled="false"
+                            class="sapUiTinyMarginEnd"
                         /> -->
-                    </OverflowToolbar>
-                </smartTable:customToolbar>
-                <smartTable:layoutData>
-                    <FlexItemData
-                        growFactor="1"
-                        baseSize="0%"
-                    />
-                </smartTable:layoutData>
-                <Table>
-                    <columns>
-                        <!-- <Column>
-                            <Text text="Category" />
-                            <customData>
-                                <core:CustomData
-                                    key="p13nData"
-                                    value="{'columnKey': 'toTypes/type/name', 'columnIndex': '1', 'leadingProperty': 'toTypes/type/name'}"
-                                />
-                            </customData>
-                        </Column> -->
-                        <!-- <Column>
-                            <Text text="{i18n>createdOnColumn}" />
-                            <customData>
-                                <core:CustomData
-                                    key="p13nData"
-                                    value="{'columnKey': 'createdAt', 'columnIndex': '2', 'leadingProperty': 'createdAt'}"
-                                />
-                            </customData>
-                        </Column> -->
 
-                        <Column>
-                            <Text text="{i18n>publishedOnColumn}" />
-                            <customData>
-                                <core:CustomData
-                                    key="p13nData"
-                                    value="{'columnKey': 'publishedAt', 'columnIndex': '3', 'leadingProperty': 'publishedAt'}"
-                                />
-                            </customData>
-                        </Column>
-
-                        <Column>
-                            <Text text="{i18n>expiredOnColumn}" />
-                            <customData>
-                                <core:CustomData
-                                    key="p13nData"
-                                    value="{'columnKey': 'endAnnouncement', 'columnIndex': '4', 'leadingProperty': 'endAnnouncement'}"
-                                />
-                            </customData>
-                        </Column>
-
-                        <Column>
-                            <Text text="{i18n>modifiedOnColumn}" />
-                            <customData>
-                                <core:CustomData
-                                    key="p13nData"
-                                    value="{'columnKey': 'modifiedAt', 'columnIndex': '5', 'leadingProperty': 'modifiedAt'}"
-                                />
-                            </customData>
-                        </Column>
-
-                        <Column>
-                            <Text text="{i18n>statusColumn}" />
-                            <customData>
-                                <core:CustomData
-                                    key="p13nData"
-                                    value="{'columnKey': 'announcementStatus', 'columnIndex': '6', 'leadingProperty': 'announcementStatus'}"
-                                />
-                            </customData>
-                        </Column>
-                        <Column>
-                            <Text text="{i18n>actionsColumn}" />
-                            <customData>
-                                <core:CustomData
-                                    key="p13nData"
-                                    value="{'columnKey': 'Actions', 'columnIndex': '31', 'leadingProperty': 'Actions', 'sortProperty': 'Actions', 'filterProperty': 'Actions'}"
-                                />
-                            </customData>
-                        </Column>
-                    </columns>
-                    <items>
-                        <ColumnListItem type="Active">
-                            <cells>
-                                <!-- <Text
-                                    text="{
-                                        path: 'toTypes',
-                                        formatter: '.formatCategoryNames'
-                                    }"
-                                /> -->
-                                <!-- <Text
-                                    text="{
-                                            path: 'createdAt',
-                                            formatter: '.formatDateOnly'
-                                        }"
-                                /> -->
-
-                                <Text
-                                    text="{
-                                            path: 'publishedAt',
-                                            formatter: '.formatDateOnly'
-                                        }"
-                                />
-
-                                <Text
-                                    text="{
-                                            path: 'endAnnouncement',
-                                            formatter: '.formatDateOnly'
-                                        }"
-                                />
-
-                                <Text
-                                    text="{
-                                            path: 'modifiedAt',
-                                            formatter: '.formatDateOnly'
-                                        }"
-                                />
-
-                                <ObjectStatus
-                                    text="{
-                                            path: 'announcementStatus',
-                                            formatter: '.formatStatusText'
-                                        }"
-                                    state="{
-                                            path: 'announcementStatus',
-                                            formatter: '.formatStatusState'
-                                        }"
-                                />
-
-                                <HBox>
-                                    <Button
-                                        icon="sap-icon://edit"
-                                        type="Transparent"
-                                        tooltip="Edit"
-                                        press="onEditPress"
-                                    />
-                                    <Button
-                                        icon="sap-icon://duplicate"
-                                        type="Transparent"
-                                        tooltip="Duplicate"
-                                    />
-                                    <Button
-                                        icon="sap-icon://sys-minus"
-                                        type="Transparent"
-                                        tooltip="Mark As Invalid"
-                                    />
-                                    <Button
-                                        icon="sap-icon://delete"
-                                        type="Transparent"
-                                        tooltip="Delete"
-                                        press="onDeletePress"
-                                    />
-                                </HBox>
-                            </cells>
-                        </ColumnListItem>
-                    </items>
-                </Table>
-            </smartTable:SmartTable>
-        </f:content>
-    </f:DynamicPage>
+                        <HBox>
+                            <Button
+                                icon="sap-icon://edit"
+                                type="Transparent"
+                                tooltip="Edit"
+                                press="onEditPress"
+                            />
+                            <Button
+                                icon="sap-icon://duplicate"
+                                type="Transparent"
+                                tooltip="Duplicate"
+                            />
+                            <Button
+                                icon="sap-icon://sys-minus"
+                                type="Transparent"
+                                tooltip="Mark As Invalid"
+                            />
+                            <Button
+                                icon="sap-icon://delete"
+                                type="Transparent"
+                                tooltip="Delete"
+                                press="onDeletePress"
+                            />
+                        </HBox>
+                    </cells>
+                </ColumnListItem>
+            </items>
+        </Table>
+    </smartTable:SmartTable>
 </mvc:View>

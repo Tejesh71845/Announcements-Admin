@@ -1,0 +1,173 @@
+<mvc:View
+    controllerName="com.incture.announcements.controller.CreateBannerAnnouncement"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:l="sap.ui.layout"
+    displayBlock="true"
+>
+    <Page
+        id="idBannerPage"
+        showHeader="true"
+    >
+        <customHeader>
+            <core:Fragment
+                fragmentName="com.incture.announcements.fragments.ShellBar"
+                type="XML"
+            />
+        </customHeader>
+
+        <content>
+            <VBox
+                class="sapUiSmallMargin"
+                fitContainer="true"
+            >
+                <!-- Header Section - Fixed alignment -->
+                <VBox class="sapUiSmallMarginBottom">
+                    <HBox
+                        alignItems="Center"
+                        class="sapUiSmallMarginBottom"
+                    >
+                        <Button
+                            icon="sap-icon://nav-back"
+                            type="Transparent"
+                            press="onNavBack"
+                        />
+                        <Title
+                            text="{i18n>createBannerAnnouncementTitle}"
+                            class="sapUiTinyMarginBegin"
+                        />
+                    </HBox>
+                    <Text
+                        text="Banner announcements will be displayed to all users in the top of the homepage and cannot be hidden"
+                        class="sapUiTinyMarginTop"
+                    />
+                </VBox>
+
+                <!-- Announcement Content Section -->
+                <VBox
+                    class="announcementDetailsSectionCss sapUiSmallMarginBottom"
+                >
+                    <Label
+                        text="{i18n>announcementContentLabel}"
+                        required="true"
+                        class="sapUiTinyMarginBottom"
+                    />
+                    <Input
+                        id="idAnnouncementContentFld"
+                        placeholder="{i18n>announcementContentPlaceholder}"
+                        value="{bannerModel>/announcementContent}"
+                        valueState="{bannerModel>/announcementContentValueState}"
+                        valueStateText="{bannerModel>/announcementContentValueStateText}"
+                        maxLength="100"
+                        width="100%"
+                        change="onInputChange"
+                    />
+                    <HBox
+                        justifyContent="End"
+                        class="sapUiTinyMarginTop"
+                    >
+                        <Text text="0/100" />
+                    </HBox>
+                </VBox>
+
+                <!-- Publishing Settings Section -->
+                <VBox class="publishingSettingsSectionCss sapUiSmallMarginTop">
+                    <Title
+                        text="{i18n>publishingSettingsSection}"
+                        level="H2"
+                        class="sapUiSmallMarginBottom"
+                    />
+                    <l:Grid
+                        defaultSpan="L4 M6 S12"
+                        hSpacing="1"
+                        vSpacing="1"
+                    >
+                        <VBox>
+                            <Label
+                                text="{i18n>publishDateLabel}"
+                                required="true"
+                                class="sapUiTinyMarginBottom"
+                            />
+                            <DatePicker
+                                value="{bannerModel>/publishDate}"
+                                valueState="{bannerModel>/publishDateValueState}"
+                                valueStateText="{bannerModel>/publishDateValueStateText}"
+                                displayFormat="dd/MM/yyyy"
+                                valueFormat="yyyy-MM-dd"
+                                minDate="{bannerModel>/minPublishDate}"
+                                change="onPublishDateChange"
+                                placeholder="MM-DD-YYYY"
+                                width="100%"
+                            />
+                            <Text
+                                text="The announcement will be published today."
+                                class="sapUiTinyMarginTop"
+                            />
+                        </VBox>
+
+                        <VBox>
+                            <Label
+                                text="{i18n>expiryDateLabel}"
+                                required="true"
+                                class="sapUiTinyMarginBottom"
+                            />
+                            <DatePicker
+                                value="{bannerModel>/expiryDate}"
+                                valueState="{bannerModel>/expiryDateValueState}"
+                                valueStateText="{bannerModel>/expiryDateValueStateText}"
+                                displayFormat="dd/MM/yyyy"
+                                valueFormat="yyyy-MM-dd"
+                                minDate="{bannerModel>/minExpiryDate}"
+                                change="onExpiryDateChange"
+                                placeholder="MM-DD-YYYY"
+                                width="100%"
+                            />
+                            <Text
+                                text="Please select Expiry Date to hide the message"
+                                class="sapUiTinyMarginTop"
+                                wrapping="true"
+                            />
+                        </VBox>
+
+                        <VBox>
+                            <Label
+                                text="{i18n>publishLaterLabel}"
+                                class="sapUiTinyMarginBottom"
+                            />
+                            <HBox alignItems="Center">
+                                <Switch
+                                    state="{bannerModel>/publishLater}"
+                                    customTextOn=" "
+                                    customTextOff=" "
+                                    change="onPublishLaterChange"
+                                />
+                                <Text
+                                    text="Select a future date to automatically publish the announcement"
+                                    class="sapUiTinyMarginBegin"
+                                    wrapping="true"
+                                />
+                            </HBox>
+                        </VBox>
+                    </l:Grid>
+                </VBox>
+            </VBox>
+        </content>
+
+        <footer>
+            <OverflowToolbar>
+                <ToolbarSpacer />
+                <Button
+                    text="{i18n>resetButton}"
+                    press="onResetPress"
+                    visible="{bannerModel>/showResetButton}"
+                />
+                <Button
+                    text="{i18n>submitButton}"
+                    type="Emphasized"
+                    press="onSubmitPress"
+                />
+            </OverflowToolbar>
+        </footer>
+    </Page>
+</mvc:View>

@@ -1,5 +1,36 @@
 /* Enter your custom styles here */
 
+/* Announcement Details Section */
+.announcementDetailsSectionCss,.publishingSettingsSectionCss,.audienceMetadataSectionCss{
+    background-color: #fff;
+    padding: 1rem;
+    border-radius: 1.25rem;
+    border: 1px solid #fffefe;
+}
+
+/* Publishing Settings Section */
+/* .publishingSettingsSectionCss {
+    background-color: #fafafa;
+    padding: 1rem;
+    border-radius: 0.25rem;
+    border: 1px solid #e0e0e0;
+} */
+
+/* Audience Metadata Section */
+/* .audienceMetadataSectionCss {
+    background-color: #f9f9f9;
+    padding: 1rem;
+    border-radius: 0.25rem;
+    border: 1px solid #e5e5e5;
+} */
+
+/* Section Header Text */
+.sectionHeaderCss {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #333333;
+}
+
 .hideFirstWizardStepCss .sapMWizardProgressNavStep:first-child {
     display: none !important;
 }

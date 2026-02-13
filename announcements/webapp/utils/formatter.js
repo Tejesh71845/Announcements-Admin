@@ -13,11 +13,37 @@ sap.ui.define([], function () {
                 case "PUBLISHED":
                     return "Success";
                 case "TO_BE_PUBLISHED":
+                case "SCHEDULED":
                     return "Warning";
                 case "DRAFT":
                     return "Information";
+                case "EXPIRED":
+                    return "Error";
+                case "INVALID":
+                    return "None";
                 default:
                     return "None";
+            }
+        },
+
+        /**
+ * Formats the status button type
+ * @param {string} sStatus - The announcement status
+ * @returns {string} The button type
+ */
+        formatStatusButtonType: function (sStatus) {
+            switch (sStatus) {
+                case "PUBLISHED":
+                    return "Success";
+                case "TO_BE_PUBLISHED":
+                case "SCHEDULED":
+                    return "Warning";
+                case "EXPIRED":
+                    return "Reject";
+                case "INVALID":
+                    return "Default";
+                default:
+                    return "Default";
             }
         },
 
@@ -31,11 +57,37 @@ sap.ui.define([], function () {
                 case "PUBLISHED":
                     return "Published";
                 case "TO_BE_PUBLISHED":
-                    return "To Be Published";
+                case "SCHEDULED":
+                    return "Scheduled";
                 case "DRAFT":
                     return "Draft";
+                case "EXPIRED":
+                    return "Expired";
+                case "INVALID":
+                    return "Invalid";
                 default:
                     return sStatus || "N/A";
+            }
+        },
+
+        /**
+         * Formats the status icon
+         * @param {string} sStatus - The announcement status
+         * @returns {string} The icon for the status
+         */
+        formatStatusIcon: function (sStatus) {
+            switch (sStatus) {
+                case "PUBLISHED":
+                    return "sap-icon://accept";
+                case "TO_BE_PUBLISHED":
+                case "SCHEDULED":
+                    return "sap-icon://pending";
+                case "EXPIRED":
+                    return "sap-icon://error";
+                case "INVALID":
+                    return "sap-icon://decline";
+                default:
+                    return "";
             }
         },
         /**

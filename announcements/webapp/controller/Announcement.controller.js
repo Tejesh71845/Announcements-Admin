@@ -55,6 +55,11 @@ sap.ui.define([
             oBindingParams.parameters.expand = "toTypes";
         },
 
+        // onTableSettingsPress: function () {
+        //     this.byId("idAnnouncementsSmartTbl").openPersonalisationDialog();
+        // },
+
+
         refreshSmartTable: function () {
             const oSmartTable = this.byId("idAnnouncementsSmartTbl");
             const oModel = this.getOwnerComponent().getModel("announcementModel");
@@ -648,13 +653,22 @@ sap.ui.define([
          * DIALOG MANAGEMENT
          * ======================================== */
 
-        onCreatePress: function () {
-            this._loadWizardDialog()
-                .then(() => this._openWizard())
-                .catch(error => {
-                    MessageBox.error("Failed to load create dialog: " + error.message);
-                });
+        // onCreatePress: function () {
+        //     this._loadWizardDialog()
+        //         .then(() => this._openWizard())
+        //         .catch(error => {
+        //             MessageBox.error("Failed to load create dialog: " + error.message);
+        //         });
+        // },
+
+        onCreateSidebarPress: function () {
+            this._router.navTo("CreateSidebarAnnouncement");
         },
+
+        onCreateBannerPress: function () {
+            this._router.navTo("CreateBannerAnnouncement");
+        },
+
 
         _loadWizardDialog: function () {
             if (this._oWizardDialog) {
@@ -2295,8 +2309,6 @@ sap.ui.define([
         /* ========================================
          * EDIT FUNCTIONALITY
          * ======================================== */
-
-
         onEditPress: function (oEvent) {
             const oButton = oEvent.getSource();
             const oListItem = oButton.getParent().getParent();
@@ -2307,69 +2319,29 @@ sap.ui.define([
                 return;
             }
 
-            const sPath = oBindingContext.getPath();
-            const oModel = this.getOwnerComponent().getModel("announcementModel");
+            const oData = oBindingContext.getObject();
+            const sAnnouncementId = oData.announcementId;
+            const sAnnouncementType = oData.announcementType;
 
-            if (!oModel) {
-                MessageBox.error("Model not found. Please refresh and try again.");
+            if (!sAnnouncementId) {
+                MessageBox.error("Unable to get announcement ID.");
                 return;
             }
 
-            // Show busy indicator
-            const oBusy = new sap.m.BusyDialog({ text: "Loading announcement..." });
-            oBusy.open();
-
-            // Read the announcement with expanded toTypes
-            oModel.read(sPath, {
-                urlParameters: {
-                    "$expand": "toTypes"
-                },
-                success: (oData) => {
-                    oBusy.close();
-
-                    console.log("Edit Data:", oData);
-                    console.log("toTypes:", oData.toTypes);
-
-                    // Extract typeIds with improved logic
-                    const aTypeIds = this._extractTypeIds(oData.toTypes);
-
-                    console.log("Extracted typeIds:", aTypeIds);
-
-                    const oEditData = {
-                        id: oData.announcementId,
-                        title: oData.title,
-                        announcementType: oData.announcementType,
-                        description: oData.description,
-                        createdBy: oData.createdBy,
-                        createdOn: oData.createdAt,
-                        modifiedBy: oData.modifiedBy,
-                        modifiedOn: oData.modifiedAt,
-                        publishedAt: oData.publishedAt,
-                        publishedBy: oData.publishedBy,
-                        announcementStatus: oData.announcementStatus,
-                        publishStatus: this._determinePublishStatus(oData),
-                        startAnnouncement: oData.startAnnouncement,
-                        endAnnouncement: oData.endAnnouncement,
-                        isActive: oData.isActive,
-                        typeId: aTypeIds.length > 0 ? aTypeIds : []
-                    };
-
-                    console.log("Final Edit Data:", oEditData);
-
-                    this._editContext = {
-                        data: oEditData,
-                        path: sPath,
-                        isEdit: true
-                    };
-
-                    this._openWizardForEdit(oEditData);
-                },
-                error: (oError) => {
-                    oBusy.close();
-                    console.error("Failed to read announcement:", oError);
-                    MessageBox.error("Failed to load announcement data. Please try again.");
-                }
-            });
+            // Navigate based on announcement type
+            if (sAnnouncementType === "Banner") {
+                // Navigate to Banner page with announcement ID
+                this._router.navTo("CreateBannerAnnouncement", {
+                    announcementId: sAnnouncementId
+                });
+            } else if (sAnnouncementType === "Sidebar" || sAnnouncementType === "Sidebar (Popup)") {
+                // Navigate to Sidebar page with announcement ID
+                this._router.navTo("CreateSidebarAnnouncement", {
+                    announcementId: sAnnouncementId
+                });
+            } else {
+                MessageBox.error("Unknown announcement type: " + sAnnouncementType + ". Cannot edit.");
+            }
         },
 
         _extractTypeIds: function (toTypes) {
