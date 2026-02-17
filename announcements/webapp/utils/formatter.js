@@ -13,7 +13,6 @@ sap.ui.define([], function () {
                 case "PUBLISHED":
                     return "Success";
                 case "TO_BE_PUBLISHED":
-                case "SCHEDULED":
                     return "Warning";
                 case "DRAFT":
                     return "Information";
@@ -36,7 +35,6 @@ sap.ui.define([], function () {
                 case "PUBLISHED":
                     return "Success";
                 case "TO_BE_PUBLISHED":
-                case "SCHEDULED":
                     return "Warning";
                 case "EXPIRED":
                     return "Reject";
@@ -57,7 +55,6 @@ sap.ui.define([], function () {
                 case "PUBLISHED":
                     return "Published";
                 case "TO_BE_PUBLISHED":
-                case "SCHEDULED":
                     return "Scheduled";
                 case "DRAFT":
                     return "Draft";
@@ -78,14 +75,13 @@ sap.ui.define([], function () {
         formatStatusIcon: function (sStatus) {
             switch (sStatus) {
                 case "PUBLISHED":
-                    return "sap-icon://accept";
+                    return "sap-icon://sys-enter-2";
                 case "TO_BE_PUBLISHED":
-                case "SCHEDULED":
                     return "sap-icon://pending";
                 case "EXPIRED":
                     return "sap-icon://error";
                 case "INVALID":
-                    return "sap-icon://decline";
+                    return "sap-icon://error";
                 default:
                     return "";
             }

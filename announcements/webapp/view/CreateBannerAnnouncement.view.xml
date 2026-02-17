@@ -22,13 +22,14 @@
                 class="sapUiSmallMargin"
                 fitContainer="true"
             >
-                <!-- Header Section - Fixed alignment -->
+                <!-- Header Section -->
                 <VBox class="sapUiSmallMarginBottom">
                     <HBox
                         alignItems="Center"
                         class="sapUiSmallMarginBottom"
                     >
                         <Button
+                            id="idBannerNavBackBtn"
                             icon="sap-icon://nav-back"
                             type="Transparent"
                             press="onNavBack"
@@ -39,7 +40,7 @@
                         />
                     </HBox>
                     <Text
-                        text="Banner announcements will be displayed to all users in the top of the homepage and cannot be hidden"
+                        text="{i18n>bannerDescText}"
                         class="sapUiTinyMarginTop"
                     />
                 </VBox>
@@ -54,7 +55,7 @@
                         class="sapUiTinyMarginBottom"
                     />
                     <Input
-                        id="idAnnouncementContentFld"
+                        id="idBannerAnnouncementContentFld"
                         placeholder="{i18n>announcementContentPlaceholder}"
                         value="{bannerModel>/announcementContent}"
                         valueState="{bannerModel>/announcementContentValueState}"
@@ -62,12 +63,13 @@
                         maxLength="100"
                         width="100%"
                         change="onInputChange"
+                        liveChange="onContentLiveChange"
                     />
                     <HBox
                         justifyContent="End"
                         class="sapUiTinyMarginTop"
                     >
-                        <Text text="0/100" />
+                        <Text text="{bannerModel>/contentCharCount}" />
                     </HBox>
                 </VBox>
 
@@ -90,19 +92,22 @@
                                 class="sapUiTinyMarginBottom"
                             />
                             <DatePicker
+                                id="idBannerPublishDateDP"
                                 value="{bannerModel>/publishDate}"
                                 valueState="{bannerModel>/publishDateValueState}"
                                 valueStateText="{bannerModel>/publishDateValueStateText}"
-                                displayFormat="dd/MM/yyyy"
+                                displayFormat="MM-dd-yyyy"
                                 valueFormat="yyyy-MM-dd"
                                 minDate="{bannerModel>/minPublishDate}"
                                 change="onPublishDateChange"
-                                placeholder="MM-DD-YYYY"
+                                placeholder="{i18n>datePlaceholder}"
                                 width="100%"
+                                enabled="{bannerModel>/publishDateEnabled}"
                             />
                             <Text
-                                text="The announcement will be published today."
+                                text="{i18n>publishDateHelpText}"
                                 class="sapUiTinyMarginTop"
+                                visible="{bannerModel>/showPublishTodayText}"
                             />
                         </VBox>
 
@@ -113,18 +118,19 @@
                                 class="sapUiTinyMarginBottom"
                             />
                             <DatePicker
+                                id="idBannerExpiryDateDP"
                                 value="{bannerModel>/expiryDate}"
                                 valueState="{bannerModel>/expiryDateValueState}"
                                 valueStateText="{bannerModel>/expiryDateValueStateText}"
-                                displayFormat="dd/MM/yyyy"
+                                displayFormat="MM-dd-yyyy"
                                 valueFormat="yyyy-MM-dd"
                                 minDate="{bannerModel>/minExpiryDate}"
                                 change="onExpiryDateChange"
-                                placeholder="MM-DD-YYYY"
+                                placeholder="{i18n>datePlaceholder}"
                                 width="100%"
                             />
                             <Text
-                                text="Please select Expiry Date to hide the message"
+                                text="{i18n>bannerExpiryDateHelpText}"
                                 class="sapUiTinyMarginTop"
                                 wrapping="true"
                             />
@@ -137,13 +143,14 @@
                             />
                             <HBox alignItems="Center">
                                 <Switch
+                                    id="idBannerPublishLaterSwitch"
                                     state="{bannerModel>/publishLater}"
                                     customTextOn=" "
                                     customTextOff=" "
                                     change="onPublishLaterChange"
                                 />
                                 <Text
-                                    text="Select a future date to automatically publish the announcement"
+                                    text="{i18n>publishLaterHelpText}"
                                     class="sapUiTinyMarginBegin"
                                     wrapping="true"
                                 />
@@ -155,19 +162,35 @@
         </content>
 
         <footer>
-            <OverflowToolbar>
+            <!-- <OverflowToolbar>
+                <ToolbarSpacer />
+                <Button
+                    id="idBannerResetBtn"
+                    text="{i18n>resetButton}"
+                    press="onResetPress"
+                    visible="{bannerModel>/showResetButton}"
+                />
+                <Button
+                    id="idBannerSubmitBtn"
+                    text="{i18n>submitButton}"
+                    type="Emphasized"
+                    press="onSubmitPress"
+                />
+            </OverflowToolbar> -->
+
+            <Toolbar>
                 <ToolbarSpacer />
                 <Button
                     text="{i18n>resetButton}"
                     press="onResetPress"
-                    visible="{bannerModel>/showResetButton}"
+                    visible="{sidebarModel>/showResetButton}"
                 />
                 <Button
                     text="{i18n>submitButton}"
                     type="Emphasized"
                     press="onSubmitPress"
                 />
-            </OverflowToolbar>
+            </Toolbar>
         </footer>
     </Page>
 </mvc:View>

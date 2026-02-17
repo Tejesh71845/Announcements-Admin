@@ -2,33 +2,44 @@
     controllerName="com.incture.announcements.controller.CreateSidebarAnnouncement"
     xmlns:mvc="sap.ui.core.mvc"
     xmlns="sap.m"
+    xmlns:f="sap.f"
     xmlns:core="sap.ui.core"
     xmlns:l="sap.ui.layout"
     displayBlock="true"
 >
     <Page
         id="idSidebarPage"
-        showHeader="true"
+        showHeader="false"
     >
-        <customHeader>
+        <f:ShellBar
+            title="Finance Digital Workspace"
+            homeIcon="./images/JJ_Logo_Stacked_Red_RGB.png"
+            showMenuButton="false"
+            showNavButton="false"
+            showCopilot="false"
+            showSearch="false"
+            showNotifications="false"
+        />
+
+        <!-- <customHeader>
             <core:Fragment
                 fragmentName="com.incture.announcements.fragments.ShellBar"
                 type="XML"
             />
-        </customHeader>
+        </customHeader> -->
 
         <content>
             <VBox
-                class="sapUiSmallMargin"
-                fitContainer="true"
+                class="sapUiSmallMargin"             
             >
-                <!-- Header Section - Fixed alignment -->
+                <!-- Header Section -->
                 <VBox class="sapUiSmallMarginBottom">
                     <HBox
                         alignItems="Center"
                         class="sapUiSmallMarginBottom"
                     >
                         <Button
+                            id="idSidebarNavBackBtn"
                             icon="sap-icon://nav-back"
                             type="Transparent"
                             press="onNavBack"
@@ -39,7 +50,7 @@
                         />
                     </HBox>
                     <Text
-                        text="Messages seen on the right side of the home page."
+                        text="{i18n>sidebarDescText}"
                         class="sapUiTinyMarginTop"
                     />
                 </VBox>
@@ -60,7 +71,7 @@
                                 class="sapUiTinyMarginBottom"
                             />
                             <Input
-                                id="idTitleFld"
+                                id="idSidebarTitleFld"
                                 placeholder="{i18n>titlePlaceholder}"
                                 value="{sidebarModel>/title}"
                                 valueState="{sidebarModel>/titleValueState}"
@@ -68,8 +79,14 @@
                                 maxLength="100"
                                 width="100%"
                                 change="onInputChange"
+                                liveChange="onTitleLiveChange"
                             />
-                            <Text text="0/100" />
+                            <HBox
+                                justifyContent="End"
+                                class="sapUiTinyMarginTop"
+                            >
+                                <Text text="{sidebarModel>/titleCharCount}" />
+                            </HBox>
                         </VBox>
 
                         <VBox>
@@ -79,14 +96,14 @@
                             />
                             <HBox alignItems="Center">
                                 <Switch
-                                    id="idPopupAnnouncementSwitch"
+                                    id="idSidebarPopupAnnouncementSwitch"
                                     state="{sidebarModel>/popupAnnouncement}"
                                     customTextOn=" "
                                     customTextOff=" "
                                     change="onPopupSwitchChange"
                                 />
                                 <Text
-                                    text="Turn this on to visible as high importance messages seen as a pop up with important '!' icon"
+                                    text="{i18n>popupHelpText}"
                                     class="sapUiTinyMarginBegin"
                                 />
                             </HBox>
@@ -101,13 +118,12 @@
                             class="sapUiTinyMarginBottom"
                         >
                             <Label
-                                text="What do you want it to say?"
+                                text="{i18n>descriptionLabel}"
                                 required="true"
                             />
-                            <!-- <Text text="0/100" /> -->
                         </HBox>
                         <VBox
-                            id="idRichTextCntr"
+                            id="idSidebarRichTextCntr"
                             width="100%"
                         >
                             <!-- RTE will be added dynamically -->
@@ -116,7 +132,7 @@
                             justifyContent="End"
                             class="sapUiTinyMarginTop"
                         >
-                            <Text text="0/500" />
+                            <Text text="{sidebarModel>/descriptionCharCount}" />
                         </HBox>
                     </VBox>
                 </VBox>
@@ -140,20 +156,22 @@
                                 class="sapUiTinyMarginBottom"
                             />
                             <DatePicker
-                                id="idPublishDateDP"
+                                id="idSidebarPublishDateDP"
                                 value="{sidebarModel>/publishDate}"
                                 valueState="{sidebarModel>/publishDateValueState}"
                                 valueStateText="{sidebarModel>/publishDateValueStateText}"
-                                displayFormat="dd/MM/yyyy"
+                                displayFormat="MM-dd-yyyy"
                                 valueFormat="yyyy-MM-dd"
                                 minDate="{sidebarModel>/minPublishDate}"
                                 change="onPublishDateChange"
-                                placeholder="MM-DD-YYYY"
+                                placeholder="{i18n>datePlaceholder}"
                                 width="100%"
+                                enabled="{sidebarModel>/publishDateEnabled}"
                             />
                             <Text
-                                text="The announcement will be published today."
+                                text="{i18n>publishDateHelpText}"
                                 class="sapUiTinyMarginTop"
+                                visible="{sidebarModel>/showPublishTodayText}"
                             />
                         </VBox>
 
@@ -164,19 +182,19 @@
                                 class="sapUiTinyMarginBottom"
                             />
                             <DatePicker
-                                id="idExpiryDateDP"
+                                id="idSidebarExpiryDateDP"
                                 value="{sidebarModel>/expiryDate}"
                                 valueState="{sidebarModel>/expiryDateValueState}"
                                 valueStateText="{sidebarModel>/expiryDateValueStateText}"
-                                displayFormat="dd/MM/yyyy"
+                                displayFormat="MM-dd-yyyy"
                                 valueFormat="yyyy-MM-dd"
                                 minDate="{sidebarModel>/minExpiryDate}"
                                 change="onExpiryDateChange"
-                                placeholder="MM-DD-YYYY"
+                                placeholder="{i18n>datePlaceholder}"
                                 width="100%"
                             />
                             <Text
-                                text="Please select expiry date to hide the announcement"
+                                text="{i18n>expiryDateHelpText}"
                                 class="sapUiTinyMarginTop"
                                 wrapping="true"
                             />
@@ -189,14 +207,14 @@
                             />
                             <HBox alignItems="Center">
                                 <Switch
-                                    id="idPublishLaterSwitch"
+                                    id="idSidebarPublishLaterSwitch"
                                     state="{sidebarModel>/publishLater}"
                                     customTextOn=" "
                                     customTextOff=" "
                                     change="onPublishLaterChange"
                                 />
                                 <Text
-                                    text="Select a future date to automatically publish the announcement"
+                                    text="{i18n>publishLaterHelpText}"
                                     class="sapUiTinyMarginBegin"
                                     wrapping="true"
                                 />
@@ -222,10 +240,10 @@
                                 text="{i18n>categoryLabel}"
                                 class="sapUiTinyMarginBottom"
                             />
-                            <ComboBox
-                                id="idCategoryCB"
-                                placeholder="{i18n>categoryPlaceholder}"
-                                selectedKey="{sidebarModel>/category}"
+                            <MultiComboBox
+                                id="idSidebarCategoryMCB"
+                                placeholder="{i18n>categoryMultiPlaceholder}"
+                                selectedKeys="{sidebarModel>/categories}"
                                 selectionChange="onCategoryChange"
                                 items="{categoryModel>/category}"
                                 width="100%"
@@ -234,7 +252,7 @@
                                     key="{categoryModel>key}"
                                     text="{categoryModel>text}"
                                 />
-                            </ComboBox>
+                            </MultiComboBox>
                         </VBox>
 
                         <VBox>
@@ -245,15 +263,15 @@
                             />
                             <HBox>
                                 <CheckBox
-                                    id="idFinanceChk"
-                                    text="Finance"
+                                    id="idSidebarFinanceChk"
+                                    text="{i18n>financeCheckbox}"
                                     selected="true"
                                     select="onOrganizationChange"
                                     enabled="false"
                                 />
                                 <CheckBox
-                                    id="idNonFinanceChk"
-                                    text="Non-Finance"
+                                    id="idSidebarNonFinanceChk"
+                                    text="{i18n>nonFinanceCheckbox}"
                                     selected="true"
                                     select="onOrganizationChange"
                                     class="sapUiSmallMarginBegin"
@@ -271,23 +289,23 @@
                         />
                         <HBox wrap="Wrap">
                             <CheckBox
-                                id="idCorporateChk"
-                                text="Corporate"
+                                id="idSidebarCorporateChk"
+                                text="{i18n>corporateCheckbox}"
                                 selected="true"
                                 select="onSectorChange"
                                 enabled="false"
                             />
                             <CheckBox
-                                id="idInnovativeMedicineChk"
-                                text="Innovative Medicine"
+                                id="idSidebarInnovativeMedicineChk"
+                                text="{i18n>innovativeMedicineCheckbox}"
                                 selected="true"
                                 select="onSectorChange"
                                 class="sapUiSmallMarginBegin"
                                 enabled="false"
                             />
                             <CheckBox
-                                id="idMedTechChk"
-                                text="MedTech"
+                                id="idSidebarMedTechChk"
+                                text="{i18n>medTechCheckbox}"
                                 selected="true"
                                 select="onSectorChange"
                                 class="sapUiSmallMarginBegin"
@@ -303,13 +321,13 @@
             <OverflowToolbar>
                 <ToolbarSpacer />
                 <Button
-                    id="idResetBtn"
+                    id="idSidebarResetBtn"
                     text="{i18n>resetButton}"
                     press="onResetPress"
                     visible="{sidebarModel>/showResetButton}"
                 />
                 <Button
-                    id="idSubmitBtn"
+                    id="idSidebarSubmitBtn"
                     text="{i18n>submitButton}"
                     type="Emphasized"
                     press="onSubmitPress"

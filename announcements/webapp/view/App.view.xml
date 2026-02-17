@@ -4,6 +4,5 @@
     xmlns="sap.m"
     xmlns:uiTable="sap.ui.table"
 >
-    <App id="app">
-    </App>
+    <App id="app" />
 </mvc:View>

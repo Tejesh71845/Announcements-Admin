@@ -37,13 +37,33 @@
     >
         <smartTable:customToolbar>
             <OverflowToolbar design="Transparent">
-                <HBox>
-                    <ToggleButton text="All" />
-                    <ToggleButton text="Published" />
-                    <ToggleButton text="Scheduled" />
-                    <ToggleButton text="Expired" />
-                    <ToggleButton text="Invalid" />
-                </HBox>
+                <SegmentedButton
+                    selectedKey="all"
+                    selectionChange="onFilterChange"
+                >
+                    <items>
+                        <SegmentedButtonItem
+                            key="all"
+                            text="All"
+                        />
+                        <SegmentedButtonItem
+                            key="published"
+                            text="Published"
+                        />
+                        <SegmentedButtonItem
+                            key="scheduled"
+                            text="Scheduled"
+                        />
+                        <SegmentedButtonItem
+                            key="expired"
+                            text="Expired"
+                        />
+                        <SegmentedButtonItem
+                            key="invalid"
+                            text="Invalid"
+                        />
+                    </items>
+                </SegmentedButton>
                 <ToolbarSpacer />
                 <SearchField
                     width="20%"
@@ -157,33 +177,18 @@
                         <ObjectStatus
                             text="{
         path: 'announcementStatus',
-        formatter: '.formatStatusText'
+        formatter: '.formatter.formatStatusText'
     }"
                             state="{
         path: 'announcementStatus',
-        formatter: '.formatStatusState'
+        formatter: '.formatter.formatStatusState'
     }"
                             icon="{
         path: 'announcementStatus',
-        formatter: '.formatStatusIcon'
+        formatter: '.formatter.formatStatusIcon'
     }"
+                            inverted="true"
                         />
-                        <!-- <Button
-                            text="{
-        path: 'announcementStatus',
-        formatter: '.formatStatusText'
-    }"
-                            icon="{
-        path: 'announcementStatus',
-        formatter: '.formatStatusIcon'
-    }"
-                            type="{
-        path: 'announcementStatus',
-        formatter: '.formatStatusButtonType'
-    }"
-                            enabled="false"
-                            class="sapUiTinyMarginEnd"
-                        /> -->
 
                         <HBox>
                             <Button

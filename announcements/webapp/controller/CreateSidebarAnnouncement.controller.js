@@ -30,16 +30,44 @@ sap.ui.define([
                 // Edit mode - load announcement data
                 this._loadAnnouncementForEdit(sEditId);
             } else {
-                // Create mode - reset form
+                // Create mode - reset form and set default dates
                 this._initSidebarModel();
+                this._setDefaultDates();
                 setTimeout(() => {
-                    this._initRichTextEditor("idRichTextCntr");
+                    this._initRichTextEditor("idSidebarRichTextCntr");
                 }, 200);
             }
         },
 
+        _setDefaultDates: function () {
+            const oModel = this.getView().getModel("sidebarModel");
+            const oToday = new Date();
+            oToday.setHours(0, 0, 0, 0);
+
+            // Set publish date to today
+            const sTodayValue = formatter.formatDateToValue(oToday);
+            oModel.setProperty("/publishDate", sTodayValue);
+
+            // Set expiry date to today + 30 days
+            const oExpiryDate = new Date(oToday);
+            oExpiryDate.setDate(oExpiryDate.getDate() + 30);
+            const sExpiryValue = formatter.formatDateToValue(oExpiryDate);
+            oModel.setProperty("/expiryDate", sExpiryValue);
+
+            // Update min expiry date
+            const oMinExpiry = new Date(oToday);
+            oMinExpiry.setDate(oMinExpiry.getDate() + 1);
+            oModel.setProperty("/minExpiryDate", oMinExpiry);
+
+            // Publish date is disabled by default (publish today)
+            oModel.setProperty("/publishDateEnabled", false);
+            oModel.setProperty("/showPublishTodayText", true);
+        },
+
         _loadAnnouncementForEdit: function (sAnnouncementId) {
-            const oBusy = new sap.m.BusyDialog({ text: "Loading announcement..." });
+            const oBusy = new sap.m.BusyDialog({
+                text: this.getView().getModel("i18n").getResourceBundle().getText("loadingAnnouncement")
+            });
             oBusy.open();
 
             const oModel = this.getOwnerComponent().getModel("announcementModel");
@@ -55,7 +83,8 @@ sap.ui.define([
                 error: (oError) => {
                     oBusy.close();
                     console.error("Failed to load announcement:", oError);
-                    MessageBox.error("Failed to load announcement data. Please try again.");
+                    const sErrorMsg = this.getView().getModel("i18n").getResourceBundle().getText("loadAnnouncementError");
+                    MessageBox.error(sErrorMsg);
                     this._navBack();
                 }
             });
@@ -67,24 +96,38 @@ sap.ui.define([
             // Determine if popup based on announcement type
             const bIsPopup = oData.announcementType === "Sidebar (Popup)";
 
-            // Extract category
+            // Extract categories (now multiple)
             const aTypeIds = this._extractTypeIds(oData.toTypes);
-            const sCategory = aTypeIds.length > 0 ? aTypeIds[0] : "";
+
+            // Parse dates
+            const sPublishDate = oData.startAnnouncement ?
+                formatter.formatDateToValue(new Date(oData.startAnnouncement)) : "";
+            const sExpiryDate = oData.endAnnouncement ?
+                formatter.formatDateToValue(new Date(oData.endAnnouncement)) : "";
+
+            const bPublishLater = this._isPublishLater(oData.startAnnouncement);
+
+            // Calculate character counts
+            const sTitle = oData.title || "";
+            const sDescription = oData.description || "";
+            const sDescPlainText = sDescription.replace(/<[^>]*>/g, "").trim();
 
             // Set model data
             oSidebarModel.setData({
                 // Basic fields
-                title: oData.title || "",
-                category: sCategory,
-                description: oData.description || "",
+                title: sTitle,
+                titleCharCount: `${sTitle.length}/100`,
+                categories: aTypeIds,
+                description: sDescription,
+                descriptionCharCount: `${sDescPlainText.length}/500`,
                 popupAnnouncement: bIsPopup,
 
                 // Publishing fields
-                publishDate: oData.startAnnouncement ?
-                    formatter.formatDateToValue(new Date(oData.startAnnouncement)) : "",
-                expiryDate: oData.endAnnouncement ?
-                    formatter.formatDateToValue(new Date(oData.endAnnouncement)) : "",
-                publishLater: this._isPublishLater(oData.startAnnouncement),
+                publishDate: sPublishDate,
+                expiryDate: sExpiryDate,
+                publishLater: bPublishLater,
+                publishDateEnabled: bPublishLater,
+                showPublishTodayText: !bPublishLater,
                 minPublishDate: new Date(),
                 minExpiryDate: new Date(),
 
@@ -113,20 +156,18 @@ sap.ui.define([
                 editId: oData.announcementId,
 
                 // Store original values for reset
-                originalTitle: oData.title || "",
-                originalCategory: sCategory,
-                originalDescription: oData.description || "",
+                originalTitle: sTitle,
+                originalCategories: aTypeIds.slice(), // Clone array
+                originalDescription: sDescription,
                 originalPopupAnnouncement: bIsPopup,
-                originalPublishDate: oData.startAnnouncement ?
-                    formatter.formatDateToValue(new Date(oData.startAnnouncement)) : "",
-                originalExpiryDate: oData.endAnnouncement ?
-                    formatter.formatDateToValue(new Date(oData.endAnnouncement)) : "",
-                originalPublishLater: this._isPublishLater(oData.startAnnouncement)
+                originalPublishDate: sPublishDate,
+                originalExpiryDate: sExpiryDate,
+                originalPublishLater: bPublishLater
             });
 
             // Initialize RTE with description
             setTimeout(() => {
-                this._initRichTextEditor("idRichTextCntr");
+                this._initRichTextEditor("idSidebarRichTextCntr");
             }, 200);
         },
 
@@ -175,14 +216,18 @@ sap.ui.define([
             const oModel = new JSONModel({
                 // Basic fields
                 title: "",
-                category: "",
+                titleCharCount: "0/100",
+                categories: [],
                 description: "",
+                descriptionCharCount: "0/500",
                 popupAnnouncement: false,
 
                 // Publishing fields
                 publishDate: "",
                 expiryDate: "",
                 publishLater: false,
+                publishDateEnabled: false,
+                showPublishTodayText: true,
                 minPublishDate: oToday,
                 minExpiryDate: oToday,
 
@@ -295,7 +340,9 @@ sap.ui.define([
                     const MAX_CHARS = 500;
                     if (sPlainText.length > MAX_CHARS) {
                         if (!this._isCharLimitToastShown) {
-                            MessageToast.show(`Description cannot exceed ${MAX_CHARS} characters. Current: ${sPlainText.length}`);
+                            const oBundle = this.getView().getModel("i18n").getResourceBundle();
+                            const sMsg = oBundle.getText("descriptionCharLimitError", [MAX_CHARS, sPlainText.length]);
+                            MessageToast.show(sMsg);
                             this._isCharLimitToastShown = true;
                             setTimeout(() => {
                                 this._isCharLimitToastShown = false;
@@ -309,6 +356,7 @@ sap.ui.define([
 
                     this._isCharLimitToastShown = false;
                     oModel.setProperty("/description", sValue);
+                    oModel.setProperty("/descriptionCharCount", `${sPlainText.length}/500`);
                     this._handleResetButtonVisibility();
                     this._validateRichTextDescription();
                 }
@@ -327,10 +375,11 @@ sap.ui.define([
             const sPlainText = sDescriptionHTML.replace(/<[^>]*>/g, "").trim();
             const bValid = sPlainText.length > 0;
 
+            const oBundle = this.getView().getModel("i18n").getResourceBundle();
             oModel.setProperty("/descriptionValueState", bValid ? "None" : "Error");
-            oModel.setProperty("/descriptionValueStateText", bValid ? "" : "Description is required");
+            oModel.setProperty("/descriptionValueStateText", bValid ? "" : oBundle.getText("descriptionRequired"));
 
-            const oContainer = this.byId("idRichTextCntr");
+            const oContainer = this.byId("idSidebarRichTextCntr");
             if (oContainer) {
                 if (!bValid) {
                     oContainer.addStyleClass("richTextErrorCss");
@@ -338,6 +387,14 @@ sap.ui.define([
                     oContainer.removeStyleClass("richTextErrorCss");
                 }
             }
+        },
+
+        onTitleLiveChange: function (oEvent) {
+            const sValue = oEvent.getParameter("value") || "";
+            const oModel = this.getView().getModel("sidebarModel");
+
+            // Update character count
+            oModel.setProperty("/titleCharCount", `${sValue.length}/100`);
         },
 
         onInputChange: function (oEvent) {
@@ -360,27 +417,33 @@ sap.ui.define([
                 oSource.setValue(sValue);
             }
 
+            // Update character count
+            const oModel = this.getView().getModel("sidebarModel");
+            oModel.setProperty("/titleCharCount", `${sValue.length}/100`);
+
             this._handleResetButtonVisibility();
             this._validateField(oSource);
         },
 
         _validateField: function (oSource) {
             const oModel = this.getView().getModel("sidebarModel");
+            const oBundle = this.getView().getModel("i18n").getResourceBundle();
             const sId = oSource.getId();
 
-            if (sId.indexOf("idTitleFld") > -1) {
+            if (sId.indexOf("idSidebarTitleFld") > -1) {
                 const sValue = (oModel.getProperty("/title") || "").trim();
                 const bValid = sValue.length > 0;
                 oModel.setProperty("/titleValueState", bValid ? "None" : "Error");
-                oModel.setProperty("/titleValueStateText", bValid ? "" : "Title is required");
+                oModel.setProperty("/titleValueStateText", bValid ? "" : oBundle.getText("titleRequired"));
             }
         },
 
         onCategoryChange: function (oEvent) {
-            const sSelectedKey = oEvent.getParameter("selectedItem").getKey();
+            const oSource = oEvent.getSource();
+            const aSelectedKeys = oSource.getSelectedKeys();
             const oModel = this.getView().getModel("sidebarModel");
 
-            oModel.setProperty("/category", sSelectedKey);
+            oModel.setProperty("/categories", aSelectedKeys);
             this._handleResetButtonVisibility();
         },
 
@@ -395,12 +458,13 @@ sap.ui.define([
         onPublishDateChange: function (oEvent) {
             const sValue = oEvent.getParameter("value");
             const oModel = this.getView().getModel("sidebarModel");
+            const oBundle = this.getView().getModel("i18n").getResourceBundle();
 
             oModel.setProperty("/publishDate", sValue);
 
             if (!sValue) {
                 oModel.setProperty("/publishDateValueState", "Error");
-                oModel.setProperty("/publishDateValueStateText", "Publish Date is required");
+                oModel.setProperty("/publishDateValueStateText", oBundle.getText("publishDateRequired"));
                 return;
             }
 
@@ -411,7 +475,7 @@ sap.ui.define([
 
             if (oSelected < oToday) {
                 oModel.setProperty("/publishDateValueState", "Error");
-                oModel.setProperty("/publishDateValueStateText", "Publish Date cannot be in the past");
+                oModel.setProperty("/publishDateValueStateText", oBundle.getText("publishDatePastError"));
                 return;
             }
 
@@ -438,12 +502,13 @@ sap.ui.define([
         onExpiryDateChange: function (oEvent) {
             const sValue = oEvent.getParameter("value");
             const oModel = this.getView().getModel("sidebarModel");
+            const oBundle = this.getView().getModel("i18n").getResourceBundle();
 
             oModel.setProperty("/expiryDate", sValue);
 
             if (!sValue) {
                 oModel.setProperty("/expiryDateValueState", "Error");
-                oModel.setProperty("/expiryDateValueStateText", "Expiry Date is required");
+                oModel.setProperty("/expiryDateValueStateText", oBundle.getText("expiryDateRequired"));
                 return;
             }
 
@@ -454,7 +519,7 @@ sap.ui.define([
 
             if (oSelected < oToday) {
                 oModel.setProperty("/expiryDateValueState", "Error");
-                oModel.setProperty("/expiryDateValueStateText", "Expiry Date cannot be in the past");
+                oModel.setProperty("/expiryDateValueStateText", oBundle.getText("expiryDatePastError"));
                 return;
             }
 
@@ -464,7 +529,7 @@ sap.ui.define([
                 oPublishDate.setHours(0, 0, 0, 0);
                 if (oSelected <= oPublishDate) {
                     oModel.setProperty("/expiryDateValueState", "Error");
-                    oModel.setProperty("/expiryDateValueStateText", "Expiry Date must be after Publish Date");
+                    oModel.setProperty("/expiryDateValueStateText", oBundle.getText("expiryDateBeforePublishError"));
                     return;
                 }
             }
@@ -480,6 +545,50 @@ sap.ui.define([
             const oModel = this.getView().getModel("sidebarModel");
 
             oModel.setProperty("/publishLater", bState);
+
+            if (bState) {
+                // Enable publish date and set to tomorrow
+                const oTomorrow = new Date();
+                oTomorrow.setDate(oTomorrow.getDate() + 1);
+                oTomorrow.setHours(0, 0, 0, 0);
+
+                const sTomorrowValue = formatter.formatDateToValue(oTomorrow);
+                oModel.setProperty("/publishDate", sTomorrowValue);
+                oModel.setProperty("/publishDateEnabled", true);
+                oModel.setProperty("/showPublishTodayText", false);
+
+                // Update expiry date to tomorrow + 30 days
+                const oExpiryDate = new Date(oTomorrow);
+                oExpiryDate.setDate(oExpiryDate.getDate() + 30);
+                const sExpiryValue = formatter.formatDateToValue(oExpiryDate);
+                oModel.setProperty("/expiryDate", sExpiryValue);
+
+                // Update min expiry date
+                const oMinExpiry = new Date(oTomorrow);
+                oMinExpiry.setDate(oMinExpiry.getDate() + 1);
+                oModel.setProperty("/minExpiryDate", oMinExpiry);
+            } else {
+                // Disable publish date and set to today
+                const oToday = new Date();
+                oToday.setHours(0, 0, 0, 0);
+
+                const sTodayValue = formatter.formatDateToValue(oToday);
+                oModel.setProperty("/publishDate", sTodayValue);
+                oModel.setProperty("/publishDateEnabled", false);
+                oModel.setProperty("/showPublishTodayText", true);
+
+                // Update expiry date to today + 30 days
+                const oExpiryDate = new Date(oToday);
+                oExpiryDate.setDate(oExpiryDate.getDate() + 30);
+                const sExpiryValue = formatter.formatDateToValue(oExpiryDate);
+                oModel.setProperty("/expiryDate", sExpiryValue);
+
+                // Update min expiry date
+                const oMinExpiry = new Date(oToday);
+                oMinExpiry.setDate(oMinExpiry.getDate() + 1);
+                oModel.setProperty("/minExpiryDate", oMinExpiry);
+            }
+
             this._handleResetButtonVisibility();
         },
 
@@ -497,10 +606,16 @@ sap.ui.define([
 
             if (bIsEditMode) {
                 // Edit mode - check if any field changed from original
+                const aCategories = oModel.getProperty("/categories") || [];
+                const aOriginalCategories = oModel.getProperty("/originalCategories") || [];
+
+                const bCategoriesChanged = aCategories.length !== aOriginalCategories.length ||
+                    !aCategories.every(cat => aOriginalCategories.includes(cat));
+
                 const bChanged =
                     oModel.getProperty("/title") !== oModel.getProperty("/originalTitle") ||
                     oModel.getProperty("/description") !== oModel.getProperty("/originalDescription") ||
-                    oModel.getProperty("/category") !== oModel.getProperty("/originalCategory") ||
+                    bCategoriesChanged ||
                     oModel.getProperty("/popupAnnouncement") !== oModel.getProperty("/originalPopupAnnouncement") ||
                     oModel.getProperty("/publishDate") !== oModel.getProperty("/originalPublishDate") ||
                     oModel.getProperty("/expiryDate") !== oModel.getProperty("/originalExpiryDate") ||
@@ -525,6 +640,7 @@ sap.ui.define([
 
         _validateAllFields: function () {
             const oModel = this.getView().getModel("sidebarModel");
+            const oBundle = this.getView().getModel("i18n").getResourceBundle();
             const sTitle = (oModel.getProperty("/title") || "").trim();
             const sDescriptionHTML = (oModel.getProperty("/description") || "").trim();
             const sPlainText = sDescriptionHTML.replace(/<[^>]*>/g, "").trim();
@@ -536,7 +652,7 @@ sap.ui.define([
             // Validate Title
             if (!sTitle) {
                 oModel.setProperty("/titleValueState", "Error");
-                oModel.setProperty("/titleValueStateText", "Title is required");
+                oModel.setProperty("/titleValueStateText", oBundle.getText("titleRequired"));
                 bValid = false;
             } else {
                 oModel.setProperty("/titleValueState", "None");
@@ -546,8 +662,8 @@ sap.ui.define([
             // Validate Description
             if (!sPlainText) {
                 oModel.setProperty("/descriptionValueState", "Error");
-                oModel.setProperty("/descriptionValueStateText", "Description is required");
-                const oContainer = this.byId("idRichTextCntr");
+                oModel.setProperty("/descriptionValueStateText", oBundle.getText("descriptionRequired"));
+                const oContainer = this.byId("idSidebarRichTextCntr");
                 if (oContainer) {
                     oContainer.addStyleClass("richTextErrorCss");
                 }
@@ -555,7 +671,7 @@ sap.ui.define([
             } else {
                 oModel.setProperty("/descriptionValueState", "None");
                 oModel.setProperty("/descriptionValueStateText", "");
-                const oContainer = this.byId("idRichTextCntr");
+                const oContainer = this.byId("idSidebarRichTextCntr");
                 if (oContainer) {
                     oContainer.removeStyleClass("richTextErrorCss");
                 }
@@ -564,14 +680,14 @@ sap.ui.define([
             // Validate Publish Date
             if (!sPublishDate) {
                 oModel.setProperty("/publishDateValueState", "Error");
-                oModel.setProperty("/publishDateValueStateText", "Publish Date is required");
+                oModel.setProperty("/publishDateValueStateText", oBundle.getText("publishDateRequired"));
                 bValid = false;
             }
 
             // Validate Expiry Date
             if (!sExpiryDate) {
                 oModel.setProperty("/expiryDateValueState", "Error");
-                oModel.setProperty("/expiryDateValueStateText", "Expiry Date is required");
+                oModel.setProperty("/expiryDateValueStateText", oBundle.getText("expiryDateRequired"));
                 bValid = false;
             }
 
@@ -580,19 +696,25 @@ sap.ui.define([
 
         onSubmitPress: function () {
             if (!this._validateAllFields()) {
-                MessageToast.show("Please complete all required fields");
+                const oBundle = this.getView().getModel("i18n").getResourceBundle();
+                MessageToast.show(oBundle.getText("validationError"));
                 return;
             }
 
             const oModel = this.getView().getModel("sidebarModel");
             const bIsEditMode = oModel.getProperty("/isEditMode");
+            const oBundle = this.getView().getModel("i18n").getResourceBundle();
 
             const sConfirmMsg = bIsEditMode
-                ? "Are you sure you want to update this announcement?"
-                : "Are you sure you want to submit this announcement?";
+                ? oBundle.getText("updateConfirmMessage")
+                : oBundle.getText("submitConfirmMessage");
+
+            const sTitle = bIsEditMode
+                ? oBundle.getText("updateConfirmTitle")
+                : oBundle.getText("submitConfirmTitle");
 
             MessageBox.confirm(sConfirmMsg, {
-                title: bIsEditMode ? "Confirm Update" : "Confirm Submit",
+                title: sTitle,
                 actions: [MessageBox.Action.YES, MessageBox.Action.NO],
                 emphasizedAction: MessageBox.Action.YES,
                 onClose: (oAction) => {
@@ -609,8 +731,9 @@ sap.ui.define([
 
         _handleSubmit: function () {
             const oModel = this.getView().getModel("sidebarModel");
+            const oBundle = this.getView().getModel("i18n").getResourceBundle();
             const sTitle = (oModel.getProperty("/title") || "").trim();
-            const sCategory = oModel.getProperty("/category");
+            const aCategories = oModel.getProperty("/categories") || [];
             const sDescriptionHTML = (oModel.getProperty("/description") || "").trim();
             const bPopupAnnouncement = oModel.getProperty("/popupAnnouncement");
             const sPublishDate = oModel.getProperty("/publishDate");
@@ -620,32 +743,36 @@ sap.ui.define([
             // Determine announcement type based on popup toggle
             const sAnnouncementType = bPopupAnnouncement ? "Sidebar (Popup)" : "Sidebar";
 
-            const oBusy = new sap.m.BusyDialog({ text: "Submitting announcement..." });
+            const oBusy = new sap.m.BusyDialog({
+                text: oBundle.getText("submittingAnnouncement")
+            });
             oBusy.open();
 
             this.getCurrentUserEmail()
                 .then((sUserEmail) => {
-                    let announcementStatus, startAnnouncement, endAnnouncement;
-                    const currentDateTime = new Date().toISOString();
+                    let announcementStatus, startAnnouncement, endAnnouncement, publishedAt;
                     const oToday = new Date();
                     oToday.setHours(0, 0, 0, 0);
                     const oPublishDate = new Date(sPublishDate);
                     oPublishDate.setHours(0, 0, 0, 0);
 
-                    // Determine status based on publish later toggle and date
+                    // Determine status and dates based on publish later toggle
                     if (!bPublishLater && oPublishDate.getTime() === oToday.getTime()) {
                         announcementStatus = "PUBLISHED";
-                        startAnnouncement = currentDateTime;
+                        startAnnouncement = new Date().toISOString();
+                        publishedAt = new Date().toISOString();
                     } else {
                         announcementStatus = "TO_BE_PUBLISHED";
                         startAnnouncement = new Date(sPublishDate).toISOString();
+                        publishedAt = new Date(sPublishDate).toISOString();
                     }
 
                     const oEndDate = new Date(sExpiryDate);
                     oEndDate.setDate(oEndDate.getDate() + 1);
                     endAnnouncement = oEndDate.toISOString();
 
-                    const aToTypes = sCategory ? [{ type: { typeId: sCategory } }] : [];
+                    // Build toTypes array from selected categories
+                    const aToTypes = aCategories.map(catId => ({ type: { typeId: catId } }));
 
                     const oPayload = {
                         data: [{
@@ -656,7 +783,7 @@ sap.ui.define([
                             startAnnouncement: startAnnouncement,
                             endAnnouncement: endAnnouncement,
                             publishedBy: sUserEmail,
-                            publishedAt: currentDateTime,
+                            publishedAt: publishedAt,
                             toTypes: aToTypes
                         }]
                     };
@@ -675,15 +802,15 @@ sap.ui.define([
                                 success: (oResponse) => {
                                     oBusy.close();
                                     const sMessage = announcementStatus === "PUBLISHED"
-                                        ? `Announcement '${sTitle}' published successfully!`
-                                        : `Announcement '${sTitle}' scheduled for publication!`;
+                                        ? oBundle.getText("createSidebarSuccess", [sTitle])
+                                        : oBundle.getText("createSidebarScheduledSuccess", [sTitle]);
                                     MessageToast.show(sMessage);
                                     this._navBack();
                                 },
                                 error: (xhr, status, err) => {
                                     oBusy.close();
                                     console.error("Create announcement failed:", status, err);
-                                    let sErrorMessage = "Failed to create announcement. Please try again.";
+                                    let sErrorMessage = oBundle.getText("createAnnouncementError");
                                     if (xhr.responseJSON?.error?.message) {
                                         sErrorMessage = xhr.responseJSON.error.message;
                                     }
@@ -694,20 +821,21 @@ sap.ui.define([
                         .catch((err) => {
                             oBusy.close();
                             console.error("CSRF token fetch failed:", err);
-                            MessageBox.error("Failed to initialize request. Please try again.");
+                            MessageBox.error(oBundle.getText("csrfTokenError"));
                         });
                 })
                 .catch((error) => {
                     oBusy.close();
-                    MessageBox.error("Failed to get current user: " + error.message);
+                    MessageBox.error(oBundle.getText("getCurrentUserError", [error.message]));
                 });
         },
 
         _handleUpdate: function () {
             const oModel = this.getView().getModel("sidebarModel");
+            const oBundle = this.getView().getModel("i18n").getResourceBundle();
             const sEditId = oModel.getProperty("/editId");
             const sTitle = (oModel.getProperty("/title") || "").trim();
-            const sCategory = oModel.getProperty("/category");
+            const aCategories = oModel.getProperty("/categories") || [];
             const sDescriptionHTML = (oModel.getProperty("/description") || "").trim();
             const bPopupAnnouncement = oModel.getProperty("/popupAnnouncement");
             const sPublishDate = oModel.getProperty("/publishDate");
@@ -717,12 +845,14 @@ sap.ui.define([
             // Determine announcement type based on popup toggle
             const sAnnouncementType = bPopupAnnouncement ? "Sidebar (Popup)" : "Sidebar";
 
-            const oBusy = new sap.m.BusyDialog({ text: "Updating announcement..." });
+            const oBusy = new sap.m.BusyDialog({
+                text: oBundle.getText("updatingAnnouncement")
+            });
             oBusy.open();
 
             this.getCurrentUserEmail()
                 .then((sUserEmail) => {
-                    let announcementStatus, startAnnouncement, endAnnouncement;
+                    let announcementStatus, startAnnouncement, endAnnouncement, publishedAt;
                     const currentDateTime = new Date().toISOString();
                     const oToday = new Date();
                     oToday.setHours(0, 0, 0, 0);
@@ -732,16 +862,19 @@ sap.ui.define([
                     if (!bPublishLater && oPublishDate.getTime() === oToday.getTime()) {
                         announcementStatus = "PUBLISHED";
                         startAnnouncement = currentDateTime;
+                        publishedAt = currentDateTime;
                     } else {
                         announcementStatus = "TO_BE_PUBLISHED";
                         startAnnouncement = new Date(sPublishDate).toISOString();
+                        publishedAt = new Date(sPublishDate).toISOString();
                     }
 
                     const oEndDate = new Date(sExpiryDate);
                     oEndDate.setDate(oEndDate.getDate() + 1);
                     endAnnouncement = oEndDate.toISOString();
 
-                    const aToTypes = sCategory ? [{ type: { typeId: sCategory } }] : [];
+                    // Build toTypes array from selected categories
+                    const aToTypes = aCategories.map(catId => ({ type: { typeId: catId } }));
 
                     const oPayload = {
                         title: sTitle,
@@ -751,7 +884,7 @@ sap.ui.define([
                         startAnnouncement: startAnnouncement,
                         endAnnouncement: endAnnouncement,
                         publishedBy: sUserEmail,
-                        publishedAt: currentDateTime,
+                        publishedAt: publishedAt,
                         modifiedAt: currentDateTime,
                         modifiedBy: sUserEmail,
                         toTypes: aToTypes
@@ -771,15 +904,15 @@ sap.ui.define([
                                 success: (oResponse) => {
                                     oBusy.close();
                                     const sMessage = announcementStatus === "PUBLISHED"
-                                        ? `Announcement '${sTitle}' updated and published successfully!`
-                                        : `Announcement '${sTitle}' updated and scheduled for publication!`;
+                                        ? oBundle.getText("updateSidebarSuccess", [sTitle])
+                                        : oBundle.getText("updateSidebarScheduledSuccess", [sTitle]);
                                     MessageToast.show(sMessage);
                                     this._navBack();
                                 },
                                 error: (xhr, status, err) => {
                                     oBusy.close();
                                     console.error("Update announcement failed:", status, err);
-                                    let sErrorMessage = "Failed to update announcement. Please try again.";
+                                    let sErrorMessage = oBundle.getText("updateAnnouncementError");
                                     if (xhr.responseJSON?.error?.message) {
                                         sErrorMessage = xhr.responseJSON.error.message;
                                     }
@@ -790,12 +923,12 @@ sap.ui.define([
                         .catch((err) => {
                             oBusy.close();
                             console.error("CSRF token fetch failed:", err);
-                            MessageBox.error("Failed to initialize request. Please try again.");
+                            MessageBox.error(oBundle.getText("csrfTokenError"));
                         });
                 })
                 .catch((error) => {
                     oBusy.close();
-                    MessageBox.error("Failed to get current user: " + error.message);
+                    MessageBox.error(oBundle.getText("getCurrentUserError", [error.message]));
                 });
         },
 
@@ -840,10 +973,11 @@ sap.ui.define([
         },
 
         onResetPress: function () {
+            const oBundle = this.getView().getModel("i18n").getResourceBundle();
             MessageBox.confirm(
-                "Are you sure you want to reset the form? All entered data will be lost.",
+                oBundle.getText("resetConfirmMessage"),
                 {
-                    title: "Confirm Reset",
+                    title: oBundle.getText("resetConfirmTitle"),
                     actions: [MessageBox.Action.YES, MessageBox.Action.NO],
                     emphasizedAction: MessageBox.Action.NO,
                     onClose: (oAction) => {
@@ -857,13 +991,20 @@ sap.ui.define([
 
         _performReset: function () {
             const oModel = this.getView().getModel("sidebarModel");
+            const oBundle = this.getView().getModel("i18n").getResourceBundle();
             const bIsEditMode = oModel.getProperty("/isEditMode");
 
             if (bIsEditMode) {
                 // Reset to original values
-                oModel.setProperty("/title", oModel.getProperty("/originalTitle"));
-                oModel.setProperty("/category", oModel.getProperty("/originalCategory"));
-                oModel.setProperty("/description", oModel.getProperty("/originalDescription"));
+                const sOriginalTitle = oModel.getProperty("/originalTitle");
+                const sOriginalDescription = oModel.getProperty("/originalDescription");
+                const sOriginalDescPlainText = sOriginalDescription.replace(/<[^>]*>/g, "").trim();
+
+                oModel.setProperty("/title", sOriginalTitle);
+                oModel.setProperty("/titleCharCount", `${sOriginalTitle.length}/100`);
+                oModel.setProperty("/categories", oModel.getProperty("/originalCategories").slice());
+                oModel.setProperty("/description", sOriginalDescription);
+                oModel.setProperty("/descriptionCharCount", `${sOriginalDescPlainText.length}/500`);
                 oModel.setProperty("/popupAnnouncement", oModel.getProperty("/originalPopupAnnouncement"));
                 oModel.setProperty("/publishDate", oModel.getProperty("/originalPublishDate"));
                 oModel.setProperty("/expiryDate", oModel.getProperty("/originalExpiryDate"));
@@ -871,17 +1012,18 @@ sap.ui.define([
 
                 // Update RTE
                 if (this._oRichTextEditor) {
-                    this._oRichTextEditor.setValue(oModel.getProperty("/originalDescription"));
+                    this._oRichTextEditor.setValue(sOriginalDescription);
                 }
 
-                MessageToast.show("Reset to original values");
+                MessageToast.show(oBundle.getText("resetToOriginalMessage"));
             } else {
                 // Clear all fields
                 this._initSidebarModel();
+                this._setDefaultDates();
                 if (this._oRichTextEditor) {
                     this._oRichTextEditor.setValue("");
                 }
-                MessageToast.show("Form has been reset");
+                MessageToast.show(oBundle.getText("formReset"));
             }
 
             oModel.setProperty("/showResetButton", false);

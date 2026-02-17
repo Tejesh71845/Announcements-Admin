@@ -26,13 +26,41 @@ sap.ui.define([
                 // Edit mode - load announcement data
                 this._loadAnnouncementForEdit(sEditId);
             } else {
-                // Create mode - reset form
+                // Create mode - reset form and set default dates
                 this._initBannerModel();
+                this._setDefaultDates();
             }
         },
 
+        _setDefaultDates: function () {
+            const oModel = this.getView().getModel("bannerModel");
+            const oToday = new Date();
+            oToday.setHours(0, 0, 0, 0);
+
+            // Set publish date to today
+            const sTodayValue = formatter.formatDateToValue(oToday);
+            oModel.setProperty("/publishDate", sTodayValue);
+
+            // Set expiry date to today + 30 days
+            const oExpiryDate = new Date(oToday);
+            oExpiryDate.setDate(oExpiryDate.getDate() + 30);
+            const sExpiryValue = formatter.formatDateToValue(oExpiryDate);
+            oModel.setProperty("/expiryDate", sExpiryValue);
+
+            // Update min expiry date
+            const oMinExpiry = new Date(oToday);
+            oMinExpiry.setDate(oMinExpiry.getDate() + 1);
+            oModel.setProperty("/minExpiryDate", oMinExpiry);
+
+            // Publish date is disabled by default (publish today)
+            oModel.setProperty("/publishDateEnabled", false);
+            oModel.setProperty("/showPublishTodayText", true);
+        },
+
         _loadAnnouncementForEdit: function (sAnnouncementId) {
-            const oBusy = new sap.m.BusyDialog({ text: "Loading announcement..." });
+            const oBusy = new sap.m.BusyDialog({
+                text: this.getView().getModel("i18n").getResourceBundle().getText("loadingAnnouncement")
+            });
             oBusy.open();
 
             const oModel = this.getOwnerComponent().getModel("announcementModel");
@@ -45,7 +73,8 @@ sap.ui.define([
                 error: (oError) => {
                     oBusy.close();
                     console.error("Failed to load announcement:", oError);
-                    MessageBox.error("Failed to load announcement data. Please try again.");
+                    const sErrorMsg = this.getView().getModel("i18n").getResourceBundle().getText("loadAnnouncementError");
+                    MessageBox.error(sErrorMsg);
                     this._navBack();
                 }
             });
@@ -54,16 +83,28 @@ sap.ui.define([
         _populateFormForEdit: function (oData) {
             const oBannerModel = this.getView().getModel("bannerModel");
 
+            // Parse dates
+            const sPublishDate = oData.startAnnouncement ?
+                formatter.formatDateToValue(new Date(oData.startAnnouncement)) : "";
+            const sExpiryDate = oData.endAnnouncement ?
+                formatter.formatDateToValue(new Date(oData.endAnnouncement)) : "";
+
+            const bPublishLater = this._isPublishLater(oData.startAnnouncement);
+
+            // Calculate character count
+            const sContent = oData.title || "";
+
             oBannerModel.setData({
                 // Basic fields - For Banner, title is the content
-                announcementContent: oData.title || "",
+                announcementContent: sContent,
+                contentCharCount: `${sContent.length}/100`,
 
                 // Publishing fields
-                publishDate: oData.startAnnouncement ?
-                    formatter.formatDateToValue(new Date(oData.startAnnouncement)) : "",
-                expiryDate: oData.endAnnouncement ?
-                    formatter.formatDateToValue(new Date(oData.endAnnouncement)) : "",
-                publishLater: this._isPublishLater(oData.startAnnouncement),
+                publishDate: sPublishDate,
+                expiryDate: sExpiryDate,
+                publishLater: bPublishLater,
+                publishDateEnabled: bPublishLater,
+                showPublishTodayText: !bPublishLater,
                 minPublishDate: new Date(),
                 minExpiryDate: new Date(),
 
@@ -83,12 +124,10 @@ sap.ui.define([
                 editId: oData.announcementId,
 
                 // Store original values for reset
-                originalAnnouncementContent: oData.title || "",
-                originalPublishDate: oData.startAnnouncement ?
-                    formatter.formatDateToValue(new Date(oData.startAnnouncement)) : "",
-                originalExpiryDate: oData.endAnnouncement ?
-                    formatter.formatDateToValue(new Date(oData.endAnnouncement)) : "",
-                originalPublishLater: this._isPublishLater(oData.startAnnouncement)
+                originalAnnouncementContent: sContent,
+                originalPublishDate: sPublishDate,
+                originalExpiryDate: sExpiryDate,
+                originalPublishLater: bPublishLater
             });
         },
 
@@ -110,11 +149,14 @@ sap.ui.define([
             const oModel = new JSONModel({
                 // Basic fields
                 announcementContent: "",
+                contentCharCount: "0/100",
 
                 // Publishing fields
                 publishDate: "",
                 expiryDate: "",
                 publishLater: false,
+                publishDateEnabled: false,
+                showPublishTodayText: true,
                 minPublishDate: oToday,
                 minExpiryDate: oToday,
 
@@ -137,6 +179,14 @@ sap.ui.define([
             this.getView().setModel(oModel, "bannerModel");
         },
 
+        onContentLiveChange: function (oEvent) {
+            const sValue = oEvent.getParameter("value") || "";
+            const oModel = this.getView().getModel("bannerModel");
+
+            // Update character count
+            oModel.setProperty("/contentCharCount", `${sValue.length}/100`);
+        },
+
         onInputChange: function (oEvent) {
             const oSource = oEvent.getSource();
             let sValue = oEvent.getParameter("value") || "";
@@ -157,31 +207,37 @@ sap.ui.define([
                 oSource.setValue(sValue);
             }
 
+            // Update character count
+            const oModel = this.getView().getModel("bannerModel");
+            oModel.setProperty("/contentCharCount", `${sValue.length}/100`);
+
             this._handleResetButtonVisibility();
             this._validateField(oSource);
         },
 
         _validateField: function (oSource) {
             const oModel = this.getView().getModel("bannerModel");
+            const oBundle = this.getView().getModel("i18n").getResourceBundle();
             const sId = oSource.getId();
 
-            if (sId.indexOf("idAnnouncementContentFld") > -1) {
+            if (sId.indexOf("idBannerAnnouncementContentFld") > -1) {
                 const sValue = (oModel.getProperty("/announcementContent") || "").trim();
                 const bValid = sValue.length > 0;
                 oModel.setProperty("/announcementContentValueState", bValid ? "None" : "Error");
-                oModel.setProperty("/announcementContentValueStateText", bValid ? "" : "Announcement Content is required");
+                oModel.setProperty("/announcementContentValueStateText", bValid ? "" : oBundle.getText("announcementContentRequired"));
             }
         },
 
         onPublishDateChange: function (oEvent) {
             const sValue = oEvent.getParameter("value");
             const oModel = this.getView().getModel("bannerModel");
+            const oBundle = this.getView().getModel("i18n").getResourceBundle();
 
             oModel.setProperty("/publishDate", sValue);
 
             if (!sValue) {
                 oModel.setProperty("/publishDateValueState", "Error");
-                oModel.setProperty("/publishDateValueStateText", "Publish Date is required");
+                oModel.setProperty("/publishDateValueStateText", oBundle.getText("publishDateRequired"));
                 return;
             }
 
@@ -192,7 +248,7 @@ sap.ui.define([
 
             if (oSelected < oToday) {
                 oModel.setProperty("/publishDateValueState", "Error");
-                oModel.setProperty("/publishDateValueStateText", "Publish Date cannot be in the past");
+                oModel.setProperty("/publishDateValueStateText", oBundle.getText("publishDatePastError"));
                 return;
             }
 
@@ -219,12 +275,13 @@ sap.ui.define([
         onExpiryDateChange: function (oEvent) {
             const sValue = oEvent.getParameter("value");
             const oModel = this.getView().getModel("bannerModel");
+            const oBundle = this.getView().getModel("i18n").getResourceBundle();
 
             oModel.setProperty("/expiryDate", sValue);
 
             if (!sValue) {
                 oModel.setProperty("/expiryDateValueState", "Error");
-                oModel.setProperty("/expiryDateValueStateText", "Expiry Date is required");
+                oModel.setProperty("/expiryDateValueStateText", oBundle.getText("expiryDateRequired"));
                 return;
             }
 
@@ -235,7 +292,7 @@ sap.ui.define([
 
             if (oSelected < oToday) {
                 oModel.setProperty("/expiryDateValueState", "Error");
-                oModel.setProperty("/expiryDateValueStateText", "Expiry Date cannot be in the past");
+                oModel.setProperty("/expiryDateValueStateText", oBundle.getText("expiryDatePastError"));
                 return;
             }
 
@@ -245,7 +302,7 @@ sap.ui.define([
                 oPublishDate.setHours(0, 0, 0, 0);
                 if (oSelected <= oPublishDate) {
                     oModel.setProperty("/expiryDateValueState", "Error");
-                    oModel.setProperty("/expiryDateValueStateText", "Expiry Date must be after Publish Date");
+                    oModel.setProperty("/expiryDateValueStateText", oBundle.getText("expiryDateBeforePublishError"));
                     return;
                 }
             }
@@ -261,6 +318,50 @@ sap.ui.define([
             const oModel = this.getView().getModel("bannerModel");
 
             oModel.setProperty("/publishLater", bState);
+
+            if (bState) {
+                // Enable publish date and set to tomorrow
+                const oTomorrow = new Date();
+                oTomorrow.setDate(oTomorrow.getDate() + 1);
+                oTomorrow.setHours(0, 0, 0, 0);
+
+                const sTomorrowValue = formatter.formatDateToValue(oTomorrow);
+                oModel.setProperty("/publishDate", sTomorrowValue);
+                oModel.setProperty("/publishDateEnabled", true);
+                oModel.setProperty("/showPublishTodayText", false);
+
+                // Update expiry date to tomorrow + 30 days
+                const oExpiryDate = new Date(oTomorrow);
+                oExpiryDate.setDate(oExpiryDate.getDate() + 30);
+                const sExpiryValue = formatter.formatDateToValue(oExpiryDate);
+                oModel.setProperty("/expiryDate", sExpiryValue);
+
+                // Update min expiry date
+                const oMinExpiry = new Date(oTomorrow);
+                oMinExpiry.setDate(oMinExpiry.getDate() + 1);
+                oModel.setProperty("/minExpiryDate", oMinExpiry);
+            } else {
+                // Disable publish date and set to today
+                const oToday = new Date();
+                oToday.setHours(0, 0, 0, 0);
+
+                const sTodayValue = formatter.formatDateToValue(oToday);
+                oModel.setProperty("/publishDate", sTodayValue);
+                oModel.setProperty("/publishDateEnabled", false);
+                oModel.setProperty("/showPublishTodayText", true);
+
+                // Update expiry date to today + 30 days
+                const oExpiryDate = new Date(oToday);
+                oExpiryDate.setDate(oExpiryDate.getDate() + 30);
+                const sExpiryValue = formatter.formatDateToValue(oExpiryDate);
+                oModel.setProperty("/expiryDate", sExpiryValue);
+
+                // Update min expiry date
+                const oMinExpiry = new Date(oToday);
+                oMinExpiry.setDate(oMinExpiry.getDate() + 1);
+                oModel.setProperty("/minExpiryDate", oMinExpiry);
+            }
+
             this._handleResetButtonVisibility();
         },
 
@@ -293,6 +394,7 @@ sap.ui.define([
 
         _validateAllFields: function () {
             const oModel = this.getView().getModel("bannerModel");
+            const oBundle = this.getView().getModel("i18n").getResourceBundle();
             const sContent = (oModel.getProperty("/announcementContent") || "").trim();
             const sPublishDate = oModel.getProperty("/publishDate");
             const sExpiryDate = oModel.getProperty("/expiryDate");
@@ -302,7 +404,7 @@ sap.ui.define([
             // Validate Content
             if (!sContent) {
                 oModel.setProperty("/announcementContentValueState", "Error");
-                oModel.setProperty("/announcementContentValueStateText", "Announcement Content is required");
+                oModel.setProperty("/announcementContentValueStateText", oBundle.getText("announcementContentRequired"));
                 bValid = false;
             } else {
                 oModel.setProperty("/announcementContentValueState", "None");
@@ -312,14 +414,14 @@ sap.ui.define([
             // Validate Publish Date
             if (!sPublishDate) {
                 oModel.setProperty("/publishDateValueState", "Error");
-                oModel.setProperty("/publishDateValueStateText", "Publish Date is required");
+                oModel.setProperty("/publishDateValueStateText", oBundle.getText("publishDateRequired"));
                 bValid = false;
             }
 
             // Validate Expiry Date
             if (!sExpiryDate) {
                 oModel.setProperty("/expiryDateValueState", "Error");
-                oModel.setProperty("/expiryDateValueStateText", "Expiry Date is required");
+                oModel.setProperty("/expiryDateValueStateText", oBundle.getText("expiryDateRequired"));
                 bValid = false;
             }
 
@@ -328,19 +430,25 @@ sap.ui.define([
 
         onSubmitPress: function () {
             if (!this._validateAllFields()) {
-                MessageToast.show("Please complete all required fields");
+                const oBundle = this.getView().getModel("i18n").getResourceBundle();
+                MessageToast.show(oBundle.getText("validationError"));
                 return;
             }
 
             const oModel = this.getView().getModel("bannerModel");
             const bIsEditMode = oModel.getProperty("/isEditMode");
+            const oBundle = this.getView().getModel("i18n").getResourceBundle();
 
             const sConfirmMsg = bIsEditMode
-                ? "Are you sure you want to update this announcement?"
-                : "Are you sure you want to submit this announcement?";
+                ? oBundle.getText("updateConfirmMessage")
+                : oBundle.getText("submitConfirmMessage");
+
+            const sTitle = bIsEditMode
+                ? oBundle.getText("updateConfirmTitle")
+                : oBundle.getText("submitConfirmTitle");
 
             MessageBox.confirm(sConfirmMsg, {
-                title: bIsEditMode ? "Confirm Update" : "Confirm Submit",
+                title: sTitle,
                 actions: [MessageBox.Action.YES, MessageBox.Action.NO],
                 emphasizedAction: MessageBox.Action.YES,
                 onClose: (oAction) => {
@@ -357,18 +465,20 @@ sap.ui.define([
 
         _handleSubmit: function () {
             const oModel = this.getView().getModel("bannerModel");
+            const oBundle = this.getView().getModel("i18n").getResourceBundle();
             const sContent = (oModel.getProperty("/announcementContent") || "").trim();
             const sPublishDate = oModel.getProperty("/publishDate");
             const sExpiryDate = oModel.getProperty("/expiryDate");
             const bPublishLater = oModel.getProperty("/publishLater");
 
-            const oBusy = new sap.m.BusyDialog({ text: "Submitting announcement..." });
+            const oBusy = new sap.m.BusyDialog({
+                text: oBundle.getText("submittingAnnouncement")
+            });
             oBusy.open();
 
             this.getCurrentUserEmail()
                 .then((sUserEmail) => {
-                    let announcementStatus, startAnnouncement, endAnnouncement;
-                    const currentDateTime = new Date().toISOString();
+                    let announcementStatus, startAnnouncement, endAnnouncement, publishedAt;
                     const oToday = new Date();
                     oToday.setHours(0, 0, 0, 0);
                     const oPublishDate = new Date(sPublishDate);
@@ -376,10 +486,12 @@ sap.ui.define([
 
                     if (!bPublishLater && oPublishDate.getTime() === oToday.getTime()) {
                         announcementStatus = "PUBLISHED";
-                        startAnnouncement = currentDateTime;
+                        startAnnouncement = new Date().toISOString();
+                        publishedAt = new Date().toISOString();
                     } else {
                         announcementStatus = "TO_BE_PUBLISHED";
                         startAnnouncement = new Date(sPublishDate).toISOString();
+                        publishedAt = new Date(sPublishDate).toISOString();
                     }
 
                     const oEndDate = new Date(sExpiryDate);
@@ -389,13 +501,13 @@ sap.ui.define([
                     const oPayload = {
                         data: [{
                             title: sContent,  // Announcement Content goes in title
-                            description: "",  // Empty description for banner
+                            description: "Banner Announcement",
                             announcementType: "Banner",
                             announcementStatus: announcementStatus,
                             startAnnouncement: startAnnouncement,
                             endAnnouncement: endAnnouncement,
                             publishedBy: sUserEmail,
-                            publishedAt: currentDateTime,
+                            publishedAt: publishedAt,
                             toTypes: []
                         }]
                     };
@@ -414,15 +526,15 @@ sap.ui.define([
                                 success: (oResponse) => {
                                     oBusy.close();
                                     const sMessage = announcementStatus === "PUBLISHED"
-                                        ? "Banner announcement published successfully!"
-                                        : "Banner announcement scheduled for publication!";
+                                        ? oBundle.getText("createBannerSuccess")
+                                        : oBundle.getText("createBannerScheduledSuccess");
                                     MessageToast.show(sMessage);
                                     this._navBack();
                                 },
                                 error: (xhr, status, err) => {
                                     oBusy.close();
                                     console.error("Create announcement failed:", status, err);
-                                    let sErrorMessage = "Failed to create announcement. Please try again.";
+                                    let sErrorMessage = oBundle.getText("createAnnouncementError");
                                     if (xhr.responseJSON?.error?.message) {
                                         sErrorMessage = xhr.responseJSON.error.message;
                                     }
@@ -433,29 +545,32 @@ sap.ui.define([
                         .catch((err) => {
                             oBusy.close();
                             console.error("CSRF token fetch failed:", err);
-                            MessageBox.error("Failed to initialize request. Please try again.");
+                            MessageBox.error(oBundle.getText("csrfTokenError"));
                         });
                 })
                 .catch((error) => {
                     oBusy.close();
-                    MessageBox.error("Failed to get current user: " + error.message);
+                    MessageBox.error(oBundle.getText("getCurrentUserError", [error.message]));
                 });
         },
 
         _handleUpdate: function () {
             const oModel = this.getView().getModel("bannerModel");
+            const oBundle = this.getView().getModel("i18n").getResourceBundle();
             const sEditId = oModel.getProperty("/editId");
             const sContent = (oModel.getProperty("/announcementContent") || "").trim();
             const sPublishDate = oModel.getProperty("/publishDate");
             const sExpiryDate = oModel.getProperty("/expiryDate");
             const bPublishLater = oModel.getProperty("/publishLater");
 
-            const oBusy = new sap.m.BusyDialog({ text: "Updating announcement..." });
+            const oBusy = new sap.m.BusyDialog({
+                text: oBundle.getText("updatingAnnouncement")
+            });
             oBusy.open();
 
             this.getCurrentUserEmail()
                 .then((sUserEmail) => {
-                    let announcementStatus, startAnnouncement, endAnnouncement;
+                    let announcementStatus, startAnnouncement, endAnnouncement, publishedAt;
                     const currentDateTime = new Date().toISOString();
                     const oToday = new Date();
                     oToday.setHours(0, 0, 0, 0);
@@ -465,9 +580,11 @@ sap.ui.define([
                     if (!bPublishLater && oPublishDate.getTime() === oToday.getTime()) {
                         announcementStatus = "PUBLISHED";
                         startAnnouncement = currentDateTime;
+                        publishedAt = currentDateTime;
                     } else {
                         announcementStatus = "TO_BE_PUBLISHED";
                         startAnnouncement = new Date(sPublishDate).toISOString();
+                        publishedAt = new Date(sPublishDate).toISOString();
                     }
 
                     const oEndDate = new Date(sExpiryDate);
@@ -476,13 +593,13 @@ sap.ui.define([
 
                     const oPayload = {
                         title: sContent,  // Announcement Content goes in title
-                        description: "Banner Announcement",  // Empty description for banner
+                        description: "Banner Announcement",
                         announcementType: "Banner",
                         announcementStatus: announcementStatus,
                         startAnnouncement: startAnnouncement,
                         endAnnouncement: endAnnouncement,
                         publishedBy: sUserEmail,
-                        publishedAt: currentDateTime,
+                        publishedAt: publishedAt,
                         modifiedAt: currentDateTime,
                         modifiedBy: sUserEmail,
                         toTypes: []
@@ -502,15 +619,15 @@ sap.ui.define([
                                 success: (oResponse) => {
                                     oBusy.close();
                                     const sMessage = announcementStatus === "PUBLISHED"
-                                        ? "Banner announcement updated and published successfully!"
-                                        : "Banner announcement updated and scheduled for publication!";
+                                        ? oBundle.getText("updateBannerSuccess")
+                                        : oBundle.getText("updateBannerScheduledSuccess");
                                     MessageToast.show(sMessage);
                                     this._navBack();
                                 },
                                 error: (xhr, status, err) => {
                                     oBusy.close();
                                     console.error("Update announcement failed:", status, err);
-                                    let sErrorMessage = "Failed to update announcement. Please try again.";
+                                    let sErrorMessage = oBundle.getText("updateAnnouncementError");
                                     if (xhr.responseJSON?.error?.message) {
                                         sErrorMessage = xhr.responseJSON.error.message;
                                     }
@@ -521,12 +638,12 @@ sap.ui.define([
                         .catch((err) => {
                             oBusy.close();
                             console.error("CSRF token fetch failed:", err);
-                            MessageBox.error("Failed to initialize request. Please try again.");
+                            MessageBox.error(oBundle.getText("csrfTokenError"));
                         });
                 })
                 .catch((error) => {
                     oBusy.close();
-                    MessageBox.error("Failed to get current user: " + error.message);
+                    MessageBox.error(oBundle.getText("getCurrentUserError", [error.message]));
                 });
         },
 
@@ -571,10 +688,11 @@ sap.ui.define([
         },
 
         onResetPress: function () {
+            const oBundle = this.getView().getModel("i18n").getResourceBundle();
             MessageBox.confirm(
-                "Are you sure you want to reset the form? All entered data will be lost.",
+                oBundle.getText("resetConfirmMessage"),
                 {
-                    title: "Confirm Reset",
+                    title: oBundle.getText("resetConfirmTitle"),
                     actions: [MessageBox.Action.YES, MessageBox.Action.NO],
                     emphasizedAction: MessageBox.Action.NO,
                     onClose: (oAction) => {
@@ -588,20 +706,25 @@ sap.ui.define([
 
         _performReset: function () {
             const oModel = this.getView().getModel("bannerModel");
+            const oBundle = this.getView().getModel("i18n").getResourceBundle();
             const bIsEditMode = oModel.getProperty("/isEditMode");
 
             if (bIsEditMode) {
                 // Reset to original values
-                oModel.setProperty("/announcementContent", oModel.getProperty("/originalAnnouncementContent"));
+                const sOriginalContent = oModel.getProperty("/originalAnnouncementContent");
+
+                oModel.setProperty("/announcementContent", sOriginalContent);
+                oModel.setProperty("/contentCharCount", `${sOriginalContent.length}/100`);
                 oModel.setProperty("/publishDate", oModel.getProperty("/originalPublishDate"));
                 oModel.setProperty("/expiryDate", oModel.getProperty("/originalExpiryDate"));
                 oModel.setProperty("/publishLater", oModel.getProperty("/originalPublishLater"));
 
-                MessageToast.show("Reset to original values");
+                MessageToast.show(oBundle.getText("resetToOriginalMessage"));
             } else {
                 // Clear all fields
                 this._initBannerModel();
-                MessageToast.show("Form has been reset");
+                this._setDefaultDates();
+                MessageToast.show(oBundle.getText("formReset"));
             }
 
             oModel.setProperty("/showResetButton", false);
