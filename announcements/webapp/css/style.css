@@ -1,54 +1,18 @@
-/* Enter your custom styles here */
 
-/* Announcement Details Section */
-.announcementDetailsSectionCss,.publishingSettingsSectionCss,.audienceMetadataSectionCss{
+.announcementDetailsSectionCss,
+.publishingSettingsSectionCss,
+.audienceMetadataSectionCss {
     background-color: #fff;
     padding: 1rem;
     border-radius: 1.25rem;
     border: 1px solid #fffefe;
 }
 
-/* Publishing Settings Section */
-/* .publishingSettingsSectionCss {
-    background-color: #fafafa;
-    padding: 1rem;
-    border-radius: 0.25rem;
-    border: 1px solid #e0e0e0;
-} */
-
-/* Audience Metadata Section */
-/* .audienceMetadataSectionCss {
-    background-color: #f9f9f9;
-    padding: 1rem;
-    border-radius: 0.25rem;
-    border: 1px solid #e5e5e5;
-} */
-
-/* Section Header Text */
 .sectionHeaderCss {
     font-size: 1.125rem;
     font-weight: 600;
     color: #333333;
 }
-
-.hideFirstWizardStepCss .sapMWizardProgressNavStep:first-child {
-    display: none !important;
-}
-
-.hideFirstWizardStepCss .sapMWizardProgressNav {
-    padding-left: 0;
-}
-
-.richTextErrorCss {
-    border: 2px solid #bb0000 !important;
-    border-radius: 4px;
-}
-
-.richTextErrorCss .sapUiRTE {
-    margin: -2px;
-}
-
-
 .smartTableBorderCss {
     border: none;
 }
@@ -64,11 +28,10 @@
     border-right: none !important;
 }
 
-.messageToastCss{
+.messageToastCss {
     max-width: 25rem !important;
 }
 
-/* Session Expired Dialog Styling */
 #sessionExpiredDialog .sapMDialogSection {
     padding: 2rem 3rem;
 }
@@ -83,7 +46,30 @@
     font-weight: 600;
 }
 
-/* Warning icon styling */
 .sessionExpiredIcon {
     color: #E9730C !important;
+}
+
+
+/* Base style for all filter buttons */
+.statusFilterBtnCss.sapMBtn {
+    margin-right: 0.25rem;
+    border-radius: 1.25rem !important;
+    min-width: 0;
+}
+
+.statusFilterBtnCss .sapMBtnInner {
+    border-radius: 1.25rem !important;
+    padding: 0 0.875rem;
+    border: 1px solid #050505 !important;
+    background-color: #ffffff !important;
+    color: #32363a !important;
+    /* transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease; */
+}
+
+/* Active / selected filter button (type="Emphasized") */
+.statusFilterBtnCss .sapMBtnInner.sapMBtnEmphasized {
+    background-color: #e51a07 !important;
+    border-color: #e51a07 !important;
+    color: #ffffff !important;
 }

@@ -37,37 +37,133 @@
     >
         <smartTable:customToolbar>
             <OverflowToolbar design="Transparent">
-                <SegmentedButton
-                    selectedKey="all"
-                    selectionChange="onFilterChange"
+                <Button
+                    id="idAllStatusFilterBtn"
+                    text="{
+                        parts: [
+                            {path: 'i18n>filterBtnAll'},
+                            {path: 'announcementCountModel>/allCount'}
+                        ],
+                        formatter: '.formatter.formatFilterBtnLabel'
+                    }"
+                    type="{
+                        path: 'announcementCountModel>/activeFilter',
+                        formatter: '.formatter.formatFilterBtnTypeAll'
+                    }"
+                    press="onStatusFilterPress"
+                    class="statusFilterBtnCss"
                 >
-                    <items>
-                        <SegmentedButtonItem
-                            key="all"
-                            text="All"
+                    <customData>
+                        <core:CustomData
+                            key="filterKey"
+                            value="all"
                         />
-                        <SegmentedButtonItem
-                            key="published"
-                            text="Published"
+                    </customData>
+                </Button>
+
+                <Button
+                    id="idPublishedStatusFilterBtn"
+                    text="{
+                        parts: [
+                            {path: 'i18n>filterBtnPublished'},
+                            {path: 'announcementCountModel>/publishedCount'}
+                        ],
+                        formatter: '.formatter.formatFilterBtnLabel'
+                    }"
+                    type="{
+                        path: 'announcementCountModel>/activeFilter',
+                        formatter: '.formatter.formatFilterBtnTypePublished'
+                    }"
+                    press="onStatusFilterPress"
+                    class="statusFilterBtnCss"
+                >
+                    <customData>
+                        <core:CustomData
+                            key="filterKey"
+                            value="published"
                         />
-                        <SegmentedButtonItem
-                            key="scheduled"
-                            text="Scheduled"
+                    </customData>
+                </Button>
+
+                <Button
+                    id="idScheduledStatusFilterBtn"
+                    text="{
+                        parts: [
+                            {path: 'i18n>filterBtnScheduled'},
+                            {path: 'announcementCountModel>/scheduledCount'}
+                        ],
+                        formatter: '.formatter.formatFilterBtnLabel'
+                    }"
+                    type="{
+                        path: 'announcementCountModel>/activeFilter',
+                        formatter: '.formatter.formatFilterBtnTypeScheduled'
+                    }"
+                    press="onStatusFilterPress"
+                    class="statusFilterBtnCss"
+                >
+                    <customData>
+                        <core:CustomData
+                            key="filterKey"
+                            value="scheduled"
                         />
-                        <SegmentedButtonItem
-                            key="expired"
-                            text="Expired"
+                    </customData>
+                </Button>
+
+                <Button
+                    id="idExpiredStatusFilterBtn"
+                    text="{
+                        parts: [
+                            {path: 'i18n>filterBtnExpired'},
+                            {path: 'announcementCountModel>/expiredCount'}
+                        ],
+                        formatter: '.formatter.formatFilterBtnLabel'
+                    }"
+                    type="{
+                        path: 'announcementCountModel>/activeFilter',
+                        formatter: '.formatter.formatFilterBtnTypeExpired'
+                    }"
+                    press="onStatusFilterPress"
+                    class="statusFilterBtnCss"
+                >
+                    <customData>
+                        <core:CustomData
+                            key="filterKey"
+                            value="expired"
                         />
-                        <SegmentedButtonItem
-                            key="invalid"
-                            text="Invalid"
+                    </customData>
+                </Button>
+
+                <Button
+                    id="idInvalidStatusFilterBtn"
+                    text="{
+                        parts: [
+                            {path: 'i18n>filterBtnInvalid'},
+                            {path: 'announcementCountModel>/invalidCount'}
+                        ],
+                        formatter: '.formatter.formatFilterBtnLabel'
+                    }"
+                    type="{
+                        path: 'announcementCountModel>/activeFilter',
+                        formatter: '.formatter.formatFilterBtnTypeInvalid'
+                    }"
+                    press="onStatusFilterPress"
+                    class="statusFilterBtnCss"
+                >
+                    <customData>
+                        <core:CustomData
+                            key="filterKey"
+                            value="invalid"
                         />
-                    </items>
-                </SegmentedButton>
+                    </customData>
+                </Button>
+
                 <ToolbarSpacer />
                 <SearchField
+                    id="idAnnouncementSearchFld"
                     width="20%"
                     class="sapUiSmallMargin"
+                    search="onSearchAnnouncement"
+                    liveChange="onSearchLiveChange"
                 />
                 <MenuButton
                     id="idCreateAnnouncementMenuBtn"
@@ -78,11 +174,11 @@
                     <menu>
                         <Menu>
                             <MenuItem
-                                text="Create Sidebar Announcement"
+                                text="{i18n>createSidebarMenuItem}"
                                 press="onCreateSidebarPress"
                             />
                             <MenuItem
-                                text="Create Banner Announcement"
+                                text="{i18n>createBannerMenuItem}"
                                 press="onCreateBannerPress"
                             />
                         </Menu>
@@ -97,10 +193,20 @@
             />
         </smartTable:layoutData>
         <Table
+            id="idAnnouncementsTable"
             growing="true"
             growingThreshold="10"
         >
             <columns>
+                <Column>
+                    <Text text="{i18n>categoryColumn}" />
+                    <customData>
+                        <core:CustomData
+                            key="p13nData"
+                            value="{'columnKey': 'category', 'columnIndex': '2', 'leadingProperty': 'category'}"
+                        />
+                    </customData>
+                </Column>
                 <Column>
                     <Text text="{i18n>publishedOnColumn}" />
                     <customData>
@@ -155,63 +261,131 @@
                     <cells>
                         <Text
                             text="{
-                                                path: 'publishedAt',
-                                                formatter: '.formatDateOnly'
-                                            }"
+        path: 'category',
+        formatter: '.formatter.formatCategoryArray'
+    }"
+                        />
+                        <Text
+                            text="{
+                                path: 'publishedAt',
+                                formatter: '.formatDateOnly'
+                            }"
                         />
 
                         <Text
                             text="{
-                                                path: 'endAnnouncement',
-                                                formatter: '.formatDateOnly'
-                                            }"
+                                path: 'endAnnouncement',
+                                formatter: '.formatDateOnly'
+                            }"
                         />
 
                         <Text
                             text="{
-                                                path: 'modifiedAt',
-                                                formatter: '.formatDateOnly'
-                                            }"
+                                path: 'modifiedAt',
+                                formatter: '.formatDateOnly'
+                            }"
                         />
 
                         <ObjectStatus
                             text="{
-        path: 'announcementStatus',
-        formatter: '.formatter.formatStatusText'
-    }"
+                                path: 'announcementStatus',
+                                formatter: '.formatter.formatStatusText'
+                            }"
                             state="{
-        path: 'announcementStatus',
-        formatter: '.formatter.formatStatusState'
-    }"
+                                path: 'announcementStatus',
+                                formatter: '.formatter.formatStatusState'
+                            }"
                             icon="{
-        path: 'announcementStatus',
-        formatter: '.formatter.formatStatusIcon'
-    }"
+                                path: 'announcementStatus',
+                                formatter: '.formatter.formatStatusIcon'
+                            }"
                             inverted="true"
                         />
 
+                        <!-- Action Buttons with conditional visibility/enabled per status -->
                         <HBox>
+                            <!-- Edit: visible only for Published and Scheduled -->
                             <Button
+                                id="idEditActionBtn"
                                 icon="sap-icon://edit"
                                 type="Transparent"
-                                tooltip="Edit"
+                                tooltip="{i18n>editTooltip}"
                                 press="onEditPress"
+                                visible="{
+                                    path: 'announcementStatus',
+                                    formatter: '.formatter.formatEditBtnVisibility'
+                                }"
                             />
+                            <!-- Edit placeholder (disabled) for other statuses to keep layout consistent -->
                             <Button
+                                id="idEditActionDisabledBtn"
+                                icon="sap-icon://edit"
+                                type="Transparent"
+                                tooltip="{i18n>editTooltip}"
+                                enabled="false"
+                                visible="{
+                                    path: 'announcementStatus',
+                                    formatter: '.formatter.formatEditBtnDisabledVisibility'
+                                }"
+                            />
+
+                            <!-- Duplicate: visible for all statuses -->
+                            <Button
+                                id="idDuplicateActionBtn"
                                 icon="sap-icon://duplicate"
                                 type="Transparent"
-                                tooltip="Duplicate"
+                                tooltip="{i18n>duplicateTooltip}"
+                                press="onDuplicatePress"
                             />
+
+                            <!-- Mark As Invalid: visible only for Published -->
                             <Button
+                                id="idMarkInvalidActionBtn"
                                 icon="sap-icon://sys-minus"
                                 type="Transparent"
-                                tooltip="Mark As Invalid"
+                                tooltip="{i18n>markAsInvalidTooltip}"
+                                press="onMarkInvalidPress"
+                                visible="{
+                                    path: 'announcementStatus',
+                                    formatter: '.formatter.formatMarkInvalidBtnVisibility'
+                                }"
                             />
+                            <!-- Mark As Invalid placeholder (disabled) for non-Published statuses -->
                             <Button
+                                id="idMarkInvalidActionDisabledBtn"
+                                icon="sap-icon://sys-minus"
+                                type="Transparent"
+                                tooltip="{i18n>markAsInvalidTooltip}"
+                                enabled="false"
+                                visible="{
+                                    path: 'announcementStatus',
+                                    formatter: '.formatter.formatMarkInvalidBtnDisabledVisibility'
+                                }"
+                            />
+
+                            <!-- Delete: visible only for Scheduled -->
+                            <Button
+                                id="idDeleteActionBtn"
                                 icon="sap-icon://delete"
                                 type="Transparent"
-                                tooltip="Delete"
+                                tooltip="{i18n>deleteTooltip}"
                                 press="onDeletePress"
+                                visible="{
+                                    path: 'announcementStatus',
+                                    formatter: '.formatter.formatDeleteBtnVisibility'
+                                }"
+                            />
+                            <!-- Delete placeholder (disabled) for non-Scheduled statuses -->
+                            <Button
+                                id="idDeleteActionDisabledBtn"
+                                icon="sap-icon://delete"
+                                type="Transparent"
+                                tooltip="{i18n>deleteTooltip}"
+                                enabled="false"
+                                visible="{
+                                    path: 'announcementStatus',
+                                    formatter: '.formatter.formatDeleteBtnDisabledVisibility'
+                                }"
                             />
                         </HBox>
                     </cells>

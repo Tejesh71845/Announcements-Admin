@@ -2,15 +2,15 @@
     "types": [
         {
             "key": "GLOBAL",
-            "text": "Planned Scheduled"
+            "text": "Banner"
         },
         {
             "key": "EMERGENCY",
-            "text": "Important Announcement"
+            "text": "Sidebar(Popup)"
         },
         {
             "key": "PROCESS",
-            "text": "Process"
+            "text": "Sidebar"
         }
     ]
 }

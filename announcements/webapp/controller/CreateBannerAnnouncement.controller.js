@@ -1,157 +1,48 @@
 sap.ui.define([
-    "sap/ui/core/mvc/Controller",
+    "com/incture/announcements/controller/BaseController",
     "sap/ui/model/json/JSONModel",
     "sap/m/MessageToast",
-    "sap/m/MessageBox",
-    "com/incture/announcements/utils/formatter"
-], (Controller, JSONModel, MessageToast, MessageBox, formatter) => {
+    "sap/m/MessageBox"
+], (BaseController, JSONModel, MessageToast, MessageBox) => {
     "use strict";
 
-    return Controller.extend("com.incture.announcements.controller.CreateBannerAnnouncement", {
+    const BANNER_ANNOUNCEMENT_TYPE = "Banner";
+    const MODEL = "bannerModel";
 
-        formatter: formatter,
+    return BaseController.extend("com.incture.announcements.controller.CreateBannerAnnouncement", {
 
         onInit: function () {
             this._router = this.getOwnerComponent().getRouter();
-            this._router.getRoute("CreateBannerAnnouncement").attachPatternMatched(this._onRouteMatched, this);
+            this._router
+                .getRoute("CreateBannerAnnouncement")
+                .attachPatternMatched(this._onRouteMatched, this);
 
             this._initBannerModel();
         },
 
         _onRouteMatched: function (oEvent) {
             const oArgs = oEvent.getParameter("arguments");
-            const sEditId = oArgs ? oArgs.announcementId : null;
+            const sEditId = oArgs?.announcementId ?? null;
+            const bDuplicate = oArgs?.duplicate === "true";
 
-            if (sEditId) {
-                // Edit mode - load announcement data
+            if (sEditId && bDuplicate) {
+                this._loadAnnouncementForDuplicate(sEditId);
+            } else if (sEditId) {
                 this._loadAnnouncementForEdit(sEditId);
             } else {
-                // Create mode - reset form and set default dates
                 this._initBannerModel();
-                this._setDefaultDates();
+                this._setDefaultDates(MODEL);
             }
-        },
-
-        _setDefaultDates: function () {
-            const oModel = this.getView().getModel("bannerModel");
-            const oToday = new Date();
-            oToday.setHours(0, 0, 0, 0);
-
-            // Set publish date to today
-            const sTodayValue = formatter.formatDateToValue(oToday);
-            oModel.setProperty("/publishDate", sTodayValue);
-
-            // Set expiry date to today + 30 days
-            const oExpiryDate = new Date(oToday);
-            oExpiryDate.setDate(oExpiryDate.getDate() + 30);
-            const sExpiryValue = formatter.formatDateToValue(oExpiryDate);
-            oModel.setProperty("/expiryDate", sExpiryValue);
-
-            // Update min expiry date
-            const oMinExpiry = new Date(oToday);
-            oMinExpiry.setDate(oMinExpiry.getDate() + 1);
-            oModel.setProperty("/minExpiryDate", oMinExpiry);
-
-            // Publish date is disabled by default (publish today)
-            oModel.setProperty("/publishDateEnabled", false);
-            oModel.setProperty("/showPublishTodayText", true);
-        },
-
-        _loadAnnouncementForEdit: function (sAnnouncementId) {
-            const oBusy = new sap.m.BusyDialog({
-                text: this.getView().getModel("i18n").getResourceBundle().getText("loadingAnnouncement")
-            });
-            oBusy.open();
-
-            const oModel = this.getOwnerComponent().getModel("announcementModel");
-
-            oModel.read(`/Announcements('${sAnnouncementId}')`, {
-                success: (oData) => {
-                    oBusy.close();
-                    this._populateFormForEdit(oData);
-                },
-                error: (oError) => {
-                    oBusy.close();
-                    console.error("Failed to load announcement:", oError);
-                    const sErrorMsg = this.getView().getModel("i18n").getResourceBundle().getText("loadAnnouncementError");
-                    MessageBox.error(sErrorMsg);
-                    this._navBack();
-                }
-            });
-        },
-
-        _populateFormForEdit: function (oData) {
-            const oBannerModel = this.getView().getModel("bannerModel");
-
-            // Parse dates
-            const sPublishDate = oData.startAnnouncement ?
-                formatter.formatDateToValue(new Date(oData.startAnnouncement)) : "";
-            const sExpiryDate = oData.endAnnouncement ?
-                formatter.formatDateToValue(new Date(oData.endAnnouncement)) : "";
-
-            const bPublishLater = this._isPublishLater(oData.startAnnouncement);
-
-            // Calculate character count
-            const sContent = oData.title || "";
-
-            oBannerModel.setData({
-                // Basic fields - For Banner, title is the content
-                announcementContent: sContent,
-                contentCharCount: `${sContent.length}/100`,
-
-                // Publishing fields
-                publishDate: sPublishDate,
-                expiryDate: sExpiryDate,
-                publishLater: bPublishLater,
-                publishDateEnabled: bPublishLater,
-                showPublishTodayText: !bPublishLater,
-                minPublishDate: new Date(),
-                minExpiryDate: new Date(),
-
-                // Validation states
-                announcementContentValueState: "None",
-                announcementContentValueStateText: "",
-                publishDateValueState: "None",
-                publishDateValueStateText: "",
-                expiryDateValueState: "None",
-                expiryDateValueStateText: "",
-
-                // Button visibility
-                showResetButton: false,
-
-                // Edit mode
-                isEditMode: true,
-                editId: oData.announcementId,
-
-                // Store original values for reset
-                originalAnnouncementContent: sContent,
-                originalPublishDate: sPublishDate,
-                originalExpiryDate: sExpiryDate,
-                originalPublishLater: bPublishLater
-            });
-        },
-
-        _isPublishLater: function (sStartAnnouncement) {
-            if (!sStartAnnouncement) return false;
-
-            const oStartDate = new Date(sStartAnnouncement);
-            oStartDate.setHours(0, 0, 0, 0);
-            const oToday = new Date();
-            oToday.setHours(0, 0, 0, 0);
-
-            return oStartDate > oToday;
         },
 
         _initBannerModel: function () {
             const oToday = new Date();
             oToday.setHours(0, 0, 0, 0);
 
-            const oModel = new JSONModel({
-                // Basic fields
+            this.getView().setModel(new JSONModel({
                 announcementContent: "",
                 contentCharCount: "0/100",
 
-                // Publishing fields
                 publishDate: "",
                 expiryDate: "",
                 publishLater: false,
@@ -160,7 +51,6 @@ sap.ui.define([
                 minPublishDate: oToday,
                 minExpiryDate: oToday,
 
-                // Validation states
                 announcementContentValueState: "None",
                 announcementContentValueStateText: "",
                 publishDateValueState: "None",
@@ -168,240 +58,196 @@ sap.ui.define([
                 expiryDateValueState: "None",
                 expiryDateValueStateText: "",
 
-                // Button visibility
-                showResetButton: false,
-
-                // Edit mode
+                resetButtonEnabled: false,
                 isEditMode: false,
+                isDuplicateMode: false,
                 editId: null
-            });
+            }), MODEL);
+        },
 
-            this.getView().setModel(oModel, "bannerModel");
+        _loadAnnouncementForEdit: function (sAnnouncementId) {
+            const oBundle = this.getView().getModel("i18n").getResourceBundle();
+            const oBusy = new sap.m.BusyDialog({ text: oBundle.getText("loadingAnnouncement") });
+            oBusy.open();
+
+            this.getOwnerComponent().getModel("announcementModel")
+                .read(`/Announcements('${sAnnouncementId}')`, {
+                    success: (oData) => { oBusy.close(); this._populateFormForEdit(oData); },
+                    error: () => {
+                        oBusy.close();
+                        MessageBox.error(oBundle.getText("loadAnnouncementError"));
+                        this._navBack();
+                    }
+                });
+        },
+
+        _populateFormForEdit: function (oData) {
+            const oModel = this.getView().getModel(MODEL);
+            const sPublishDate = oData.startAnnouncement
+                ? this.formatter.formatDateToValue(new Date(oData.startAnnouncement)) : "";
+            const sExpiryDate = oData.endAnnouncement
+                ? this.formatter.formatDateToValue(new Date(oData.endAnnouncement)) : "";
+            const bPublishLater = this._isPublishLater(oData.startAnnouncement);
+            const sContent = oData.title || "";
+
+            oModel.setData({
+                announcementContent: sContent,
+                contentCharCount: `${sContent.length}/100`,
+
+                publishDate: sPublishDate,
+                expiryDate: sExpiryDate,
+                publishLater: bPublishLater,
+                publishDateEnabled: bPublishLater,
+                showPublishTodayText: !bPublishLater,
+                minPublishDate: new Date(),
+                minExpiryDate: new Date(),
+
+                announcementContentValueState: "None", announcementContentValueStateText: "",
+                publishDateValueState: "None", publishDateValueStateText: "",
+                expiryDateValueState: "None", expiryDateValueStateText: "",
+
+                resetButtonEnabled: false,
+                isEditMode: true,
+                isDuplicateMode: false,
+                editId: oData.announcementId,
+
+                originalAnnouncementContent: sContent,
+                originalPublishDate: sPublishDate,
+                originalExpiryDate: sExpiryDate,
+                originalPublishLater: bPublishLater
+            });
+        },
+
+        /* ========================================================
+         * LOAD FOR DUPLICATE
+         * ======================================================== */
+
+        _loadAnnouncementForDuplicate: function (sAnnouncementId) {
+            const oBundle = this.getView().getModel("i18n").getResourceBundle();
+            const oBusy = new sap.m.BusyDialog({ text: oBundle.getText("loadingAnnouncement") });
+            oBusy.open();
+
+            this.getOwnerComponent().getModel("announcementModel")
+                .read(`/Announcements('${sAnnouncementId}')`, {
+                    success: (oData) => { oBusy.close(); this._populateFormForDuplicate(oData); },
+                    error: () => {
+                        oBusy.close();
+                        MessageBox.error(oBundle.getText("loadAnnouncementError"));
+                        this._navBack();
+                    }
+                });
+        },
+
+        _populateFormForDuplicate: function (oData) {
+            const oModel = this.getView().getModel(MODEL);
+            const oToday = new Date();
+            oToday.setHours(0, 0, 0, 0);
+
+            const sContent = oData.title || "";
+            const bPublishLater = this._isPublishLater(oData.startAnnouncement);
+
+            let sPublishDate = "", sExpiryDate = "";
+            let bPublishDateEnabled = false, bShowPublishTodayText = true;
+            let oMinPublishDate = new Date(oToday), oMinExpiryDate = new Date(oToday);
+
+            if (!bPublishLater) {
+                sPublishDate = this.formatter.formatDateToValue(oToday);
+                oMinExpiryDate = new Date(oToday);
+                oMinExpiryDate.setDate(oMinExpiryDate.getDate() + 1);
+            } else {
+                bPublishDateEnabled = true;
+                bShowPublishTodayText = false;
+                oMinPublishDate = new Date(oToday);
+                oMinPublishDate.setDate(oMinPublishDate.getDate() + 1);
+            }
+
+            oModel.setData({
+                announcementContent: sContent,
+                contentCharCount: `${sContent.length}/100`,
+
+                publishDate: sPublishDate,
+                expiryDate: sExpiryDate,
+                publishLater: bPublishLater,
+                publishDateEnabled: bPublishDateEnabled,
+                showPublishTodayText: bShowPublishTodayText,
+                minPublishDate: oMinPublishDate,
+                minExpiryDate: oMinExpiryDate,
+
+                announcementContentValueState: "None", announcementContentValueStateText: "",
+                publishDateValueState: "None", publishDateValueStateText: "",
+                expiryDateValueState: "None", expiryDateValueStateText: "",
+
+                isEditMode: false,
+                isDuplicateMode: true,
+                editId: null,
+                resetButtonEnabled: true
+            });
         },
 
         onContentLiveChange: function (oEvent) {
             const sValue = oEvent.getParameter("value") || "";
-            const oModel = this.getView().getModel("bannerModel");
-
-            // Update character count
-            oModel.setProperty("/contentCharCount", `${sValue.length}/100`);
+            this.getView().getModel(MODEL).setProperty("/contentCharCount", `${sValue.length}/100`);
         },
 
         onInputChange: function (oEvent) {
             const oSource = oEvent.getSource();
             let sValue = oEvent.getParameter("value") || "";
 
-            // Remove special characters
             sValue = sValue.replace(/[^a-zA-Z0-9 ]/g, "");
+            const iMax = oSource.getMaxLength?.() > 0 ? oSource.getMaxLength() : 100;
+            if (sValue.length > iMax) { sValue = sValue.substring(0, iMax); }
+            if (sValue !== oEvent.getParameter("value")) { oSource.setValue(sValue); }
 
-            const iMaxLength = oSource.getMaxLength && oSource.getMaxLength() > 0
-                ? oSource.getMaxLength()
-                : 100;
-
-            if (sValue.length > iMaxLength) {
-                sValue = sValue.substring(0, iMaxLength);
-                oSource.setValue(sValue);
-            }
-
-            if (sValue !== oEvent.getParameter("value")) {
-                oSource.setValue(sValue);
-            }
-
-            // Update character count
-            const oModel = this.getView().getModel("bannerModel");
-            oModel.setProperty("/contentCharCount", `${sValue.length}/100`);
-
+            this.getView().getModel(MODEL).setProperty("/contentCharCount", `${sValue.length}/100`);
             this._handleResetButtonVisibility();
             this._validateField(oSource);
         },
 
         _validateField: function (oSource) {
-            const oModel = this.getView().getModel("bannerModel");
+            const oModel = this.getView().getModel(MODEL);
             const oBundle = this.getView().getModel("i18n").getResourceBundle();
-            const sId = oSource.getId();
 
-            if (sId.indexOf("idBannerAnnouncementContentFld") > -1) {
-                const sValue = (oModel.getProperty("/announcementContent") || "").trim();
-                const bValid = sValue.length > 0;
+            if (oSource.getId().includes("idBannerAnnouncementContentFld")) {
+                const bValid = (oModel.getProperty("/announcementContent") || "").trim().length > 0;
                 oModel.setProperty("/announcementContentValueState", bValid ? "None" : "Error");
                 oModel.setProperty("/announcementContentValueStateText", bValid ? "" : oBundle.getText("announcementContentRequired"));
             }
         },
 
-        onPublishDateChange: function (oEvent) {
-            const sValue = oEvent.getParameter("value");
-            const oModel = this.getView().getModel("bannerModel");
-            const oBundle = this.getView().getModel("i18n").getResourceBundle();
+        onPublishDateChange: function (oEvent) { this._onPublishDateChange(oEvent, MODEL); },
+        onExpiryDateChange: function (oEvent) { this._onExpiryDateChange(oEvent, MODEL); },
+        onPublishLaterChange: function (oEvent) { this._onPublishLaterChange(oEvent, MODEL); },
 
-            oModel.setProperty("/publishDate", sValue);
-
-            if (!sValue) {
-                oModel.setProperty("/publishDateValueState", "Error");
-                oModel.setProperty("/publishDateValueStateText", oBundle.getText("publishDateRequired"));
-                return;
-            }
-
-            const oSelected = new Date(sValue);
-            oSelected.setHours(0, 0, 0, 0);
-            const oToday = new Date();
-            oToday.setHours(0, 0, 0, 0);
-
-            if (oSelected < oToday) {
-                oModel.setProperty("/publishDateValueState", "Error");
-                oModel.setProperty("/publishDateValueStateText", oBundle.getText("publishDatePastError"));
-                return;
-            }
-
-            oModel.setProperty("/publishDateValueState", "None");
-            oModel.setProperty("/publishDateValueStateText", "");
-
-            // Auto-set expiry date to 30 days later
-            const oExpiryDate = new Date(oSelected);
-            oExpiryDate.setDate(oExpiryDate.getDate() + 30);
-            const sExpiryValue = formatter.formatDateToValue(oExpiryDate);
-
-            oModel.setProperty("/expiryDate", sExpiryValue);
-            oModel.setProperty("/expiryDateValueState", "None");
-            oModel.setProperty("/expiryDateValueStateText", "");
-
-            // Update min expiry date
-            const oMinExpiry = new Date(oSelected);
-            oMinExpiry.setDate(oMinExpiry.getDate() + 1);
-            oModel.setProperty("/minExpiryDate", oMinExpiry);
-
-            this._handleResetButtonVisibility();
-        },
-
-        onExpiryDateChange: function (oEvent) {
-            const sValue = oEvent.getParameter("value");
-            const oModel = this.getView().getModel("bannerModel");
-            const oBundle = this.getView().getModel("i18n").getResourceBundle();
-
-            oModel.setProperty("/expiryDate", sValue);
-
-            if (!sValue) {
-                oModel.setProperty("/expiryDateValueState", "Error");
-                oModel.setProperty("/expiryDateValueStateText", oBundle.getText("expiryDateRequired"));
-                return;
-            }
-
-            const oSelected = new Date(sValue);
-            oSelected.setHours(0, 0, 0, 0);
-            const oToday = new Date();
-            oToday.setHours(0, 0, 0, 0);
-
-            if (oSelected < oToday) {
-                oModel.setProperty("/expiryDateValueState", "Error");
-                oModel.setProperty("/expiryDateValueStateText", oBundle.getText("expiryDatePastError"));
-                return;
-            }
-
-            const sPublishDate = oModel.getProperty("/publishDate");
-            if (sPublishDate) {
-                const oPublishDate = new Date(sPublishDate);
-                oPublishDate.setHours(0, 0, 0, 0);
-                if (oSelected <= oPublishDate) {
-                    oModel.setProperty("/expiryDateValueState", "Error");
-                    oModel.setProperty("/expiryDateValueStateText", oBundle.getText("expiryDateBeforePublishError"));
-                    return;
-                }
-            }
-
-            oModel.setProperty("/expiryDateValueState", "None");
-            oModel.setProperty("/expiryDateValueStateText", "");
-
-            this._handleResetButtonVisibility();
-        },
-
-        onPublishLaterChange: function (oEvent) {
-            const bState = oEvent.getParameter("state");
-            const oModel = this.getView().getModel("bannerModel");
-
-            oModel.setProperty("/publishLater", bState);
-
-            if (bState) {
-                // Enable publish date and set to tomorrow
-                const oTomorrow = new Date();
-                oTomorrow.setDate(oTomorrow.getDate() + 1);
-                oTomorrow.setHours(0, 0, 0, 0);
-
-                const sTomorrowValue = formatter.formatDateToValue(oTomorrow);
-                oModel.setProperty("/publishDate", sTomorrowValue);
-                oModel.setProperty("/publishDateEnabled", true);
-                oModel.setProperty("/showPublishTodayText", false);
-
-                // Update expiry date to tomorrow + 30 days
-                const oExpiryDate = new Date(oTomorrow);
-                oExpiryDate.setDate(oExpiryDate.getDate() + 30);
-                const sExpiryValue = formatter.formatDateToValue(oExpiryDate);
-                oModel.setProperty("/expiryDate", sExpiryValue);
-
-                // Update min expiry date
-                const oMinExpiry = new Date(oTomorrow);
-                oMinExpiry.setDate(oMinExpiry.getDate() + 1);
-                oModel.setProperty("/minExpiryDate", oMinExpiry);
-            } else {
-                // Disable publish date and set to today
-                const oToday = new Date();
-                oToday.setHours(0, 0, 0, 0);
-
-                const sTodayValue = formatter.formatDateToValue(oToday);
-                oModel.setProperty("/publishDate", sTodayValue);
-                oModel.setProperty("/publishDateEnabled", false);
-                oModel.setProperty("/showPublishTodayText", true);
-
-                // Update expiry date to today + 30 days
-                const oExpiryDate = new Date(oToday);
-                oExpiryDate.setDate(oExpiryDate.getDate() + 30);
-                const sExpiryValue = formatter.formatDateToValue(oExpiryDate);
-                oModel.setProperty("/expiryDate", sExpiryValue);
-
-                // Update min expiry date
-                const oMinExpiry = new Date(oToday);
-                oMinExpiry.setDate(oMinExpiry.getDate() + 1);
-                oModel.setProperty("/minExpiryDate", oMinExpiry);
-            }
-
-            this._handleResetButtonVisibility();
-        },
 
         _handleResetButtonVisibility: function () {
-            const oModel = this.getView().getModel("bannerModel");
-            const bIsEditMode = oModel.getProperty("/isEditMode");
+            const oModel = this.getView().getModel(MODEL);
 
-            if (bIsEditMode) {
-                // Edit mode - check if any field changed from original
+            if (oModel.getProperty("/isEditMode")) {
                 const bChanged =
                     oModel.getProperty("/announcementContent") !== oModel.getProperty("/originalAnnouncementContent") ||
                     oModel.getProperty("/publishDate") !== oModel.getProperty("/originalPublishDate") ||
                     oModel.getProperty("/expiryDate") !== oModel.getProperty("/originalExpiryDate") ||
                     oModel.getProperty("/publishLater") !== oModel.getProperty("/originalPublishLater");
+                oModel.setProperty("/resetButtonEnabled", bChanged);
 
-                oModel.setProperty("/showResetButton", bChanged);
+            } else if (oModel.getProperty("/isDuplicateMode")) {
+                oModel.setProperty("/resetButtonEnabled", true);
+
             } else {
-                // Create mode - check if any data entered
-                const sContent = oModel.getProperty("/announcementContent") || "";
-                const sPublishDate = oModel.getProperty("/publishDate") || "";
-                const sExpiryDate = oModel.getProperty("/expiryDate") || "";
-
-                const bHasData = sContent.length > 0 ||
-                    sPublishDate.length > 0 ||
-                    sExpiryDate.length > 0;
-
-                oModel.setProperty("/showResetButton", bHasData);
+                const bHasData =
+                    (oModel.getProperty("/announcementContent") || "").length > 0 ||
+                    (oModel.getProperty("/publishDate") || "").length > 0 ||
+                    (oModel.getProperty("/expiryDate") || "").length > 0;
+                oModel.setProperty("/resetButtonEnabled", bHasData);
             }
         },
 
         _validateAllFields: function () {
-            const oModel = this.getView().getModel("bannerModel");
+            const oModel = this.getView().getModel(MODEL);
             const oBundle = this.getView().getModel("i18n").getResourceBundle();
             const sContent = (oModel.getProperty("/announcementContent") || "").trim();
-            const sPublishDate = oModel.getProperty("/publishDate");
-            const sExpiryDate = oModel.getProperty("/expiryDate");
-
             let bValid = true;
 
-            // Validate Content
             if (!sContent) {
                 oModel.setProperty("/announcementContentValueState", "Error");
                 oModel.setProperty("/announcementContentValueStateText", oBundle.getText("announcementContentRequired"));
@@ -411,15 +257,13 @@ sap.ui.define([
                 oModel.setProperty("/announcementContentValueStateText", "");
             }
 
-            // Validate Publish Date
-            if (!sPublishDate) {
+            if (!oModel.getProperty("/publishDate")) {
                 oModel.setProperty("/publishDateValueState", "Error");
                 oModel.setProperty("/publishDateValueStateText", oBundle.getText("publishDateRequired"));
                 bValid = false;
             }
 
-            // Validate Expiry Date
-            if (!sExpiryDate) {
+            if (!oModel.getProperty("/expiryDate")) {
                 oModel.setProperty("/expiryDateValueState", "Error");
                 oModel.setProperty("/expiryDateValueStateText", oBundle.getText("expiryDateRequired"));
                 bValid = false;
@@ -430,312 +274,176 @@ sap.ui.define([
 
         onSubmitPress: function () {
             if (!this._validateAllFields()) {
-                const oBundle = this.getView().getModel("i18n").getResourceBundle();
-                MessageToast.show(oBundle.getText("validationError"));
+                MessageToast.show(this.getView().getModel("i18n").getResourceBundle().getText("validationError"));
                 return;
             }
 
-            const oModel = this.getView().getModel("bannerModel");
-            const bIsEditMode = oModel.getProperty("/isEditMode");
+            const oModel = this.getView().getModel(MODEL);
             const oBundle = this.getView().getModel("i18n").getResourceBundle();
+            const bIsEdit = oModel.getProperty("/isEditMode");
+            const bIsDup = oModel.getProperty("/isDuplicateMode");
 
-            const sConfirmMsg = bIsEditMode
-                ? oBundle.getText("updateConfirmMessage")
-                : oBundle.getText("submitConfirmMessage");
-
-            const sTitle = bIsEditMode
-                ? oBundle.getText("updateConfirmTitle")
-                : oBundle.getText("submitConfirmTitle");
+            const sConfirmMsg = oBundle.getText(bIsEdit ? "updateConfirmMessage" : bIsDup ? "duplicateConfirmMessage" : "submitConfirmMessage");
+            const sConfirmTitle = oBundle.getText(bIsEdit ? "updateConfirmTitle" : bIsDup ? "duplicateConfirmTitle" : "submitConfirmTitle");
 
             MessageBox.confirm(sConfirmMsg, {
-                title: sTitle,
+                title: sConfirmTitle,
                 actions: [MessageBox.Action.YES, MessageBox.Action.NO],
                 emphasizedAction: MessageBox.Action.YES,
                 onClose: (oAction) => {
                     if (oAction === MessageBox.Action.YES) {
-                        if (bIsEditMode) {
-                            this._handleUpdate();
-                        } else {
-                            this._handleSubmit();
-                        }
+                        bIsEdit ? this._handleUpdate() : this._handleSubmit();
                     }
                 }
             });
         },
 
         _handleSubmit: function () {
-            const oModel = this.getView().getModel("bannerModel");
+            const oModel = this.getView().getModel(MODEL);
             const oBundle = this.getView().getModel("i18n").getResourceBundle();
-            const sContent = (oModel.getProperty("/announcementContent") || "").trim();
-            const sPublishDate = oModel.getProperty("/publishDate");
-            const sExpiryDate = oModel.getProperty("/expiryDate");
-            const bPublishLater = oModel.getProperty("/publishLater");
+            const bIsDup = oModel.getProperty("/isDuplicateMode");
 
             const oBusy = new sap.m.BusyDialog({
-                text: oBundle.getText("submittingAnnouncement")
+                text: oBundle.getText(bIsDup ? "duplicatingAnnouncement" : "submittingAnnouncement")
             });
             oBusy.open();
 
             this.getCurrentUserEmail()
                 .then((sUserEmail) => {
-                    let announcementStatus, startAnnouncement, endAnnouncement, publishedAt;
-                    const oToday = new Date();
-                    oToday.setHours(0, 0, 0, 0);
-                    const oPublishDate = new Date(sPublishDate);
-                    oPublishDate.setHours(0, 0, 0, 0);
-
-                    if (!bPublishLater && oPublishDate.getTime() === oToday.getTime()) {
-                        announcementStatus = "PUBLISHED";
-                        startAnnouncement = new Date().toISOString();
-                        publishedAt = new Date().toISOString();
-                    } else {
-                        announcementStatus = "TO_BE_PUBLISHED";
-                        startAnnouncement = new Date(sPublishDate).toISOString();
-                        publishedAt = new Date(sPublishDate).toISOString();
-                    }
-
-                    const oEndDate = new Date(sExpiryDate);
-                    oEndDate.setDate(oEndDate.getDate() + 1);
-                    endAnnouncement = oEndDate.toISOString();
+                    const { announcementStatus, startAnnouncement, endAnnouncement, publishedAt } =
+                        this._buildStatusFields(
+                            oModel.getProperty("/publishDate"),
+                            oModel.getProperty("/expiryDate"),
+                            oModel.getProperty("/publishLater")
+                        );
 
                     const oPayload = {
                         data: [{
-                            title: sContent,  // Announcement Content goes in title
+                            title: (oModel.getProperty("/announcementContent") || "").trim(),
                             description: "Banner Announcement",
-                            announcementType: "Banner",
-                            announcementStatus: announcementStatus,
-                            startAnnouncement: startAnnouncement,
-                            endAnnouncement: endAnnouncement,
+                            announcementType: BANNER_ANNOUNCEMENT_TYPE,
+                            announcementStatus,
+                            startAnnouncement,
+                            endAnnouncement,
                             publishedBy: sUserEmail,
-                            publishedAt: publishedAt,
-                            toTypes: []
+                            publishedAt,
+                            category: "General"
                         }]
                     };
 
-                    this._getCSRFToken()
-                        .then((csrfToken) => {
+                    return this._getCSRFToken().then((csrfToken) =>
+                        new Promise((resolve, reject) => {
                             $.ajax({
                                 url: "/JnJ_Workzone_Portal_Destination_Node/odata/v2/announcement/bulkCreateAnnouncements",
                                 method: "POST",
                                 contentType: "application/json",
                                 dataType: "json",
-                                headers: {
-                                    "X-CSRF-Token": csrfToken
-                                },
+                                headers: { "X-CSRF-Token": csrfToken },
                                 data: JSON.stringify(oPayload),
-                                success: (oResponse) => {
-                                    oBusy.close();
-                                    const sMessage = announcementStatus === "PUBLISHED"
-                                        ? oBundle.getText("createBannerSuccess")
-                                        : oBundle.getText("createBannerScheduledSuccess");
-                                    MessageToast.show(sMessage);
-                                    this._navBack();
-                                },
-                                error: (xhr, status, err) => {
-                                    oBusy.close();
-                                    console.error("Create announcement failed:", status, err);
-                                    let sErrorMessage = oBundle.getText("createAnnouncementError");
-                                    if (xhr.responseJSON?.error?.message) {
-                                        sErrorMessage = xhr.responseJSON.error.message;
-                                    }
-                                    MessageBox.error(sErrorMessage);
-                                }
+                                success: resolve,
+                                error: reject
                             });
                         })
-                        .catch((err) => {
-                            oBusy.close();
-                            console.error("CSRF token fetch failed:", err);
-                            MessageBox.error(oBundle.getText("csrfTokenError"));
-                        });
+                    ).then(() => {
+                        oBusy.close();
+                        const sKey = bIsDup
+                            ? (announcementStatus === "PUBLISHED" ? "duplicateBannerSuccess" : "duplicateBannerScheduledSuccess")
+                            : (announcementStatus === "PUBLISHED" ? "createBannerSuccess" : "createBannerScheduledSuccess");
+                        MessageToast.show(oBundle.getText(sKey));
+                        this._navBack();
+                    });
                 })
-                .catch((error) => {
+                .catch((oErr) => {
                     oBusy.close();
-                    MessageBox.error(oBundle.getText("getCurrentUserError", [error.message]));
+                    MessageBox.error(oErr?.responseJSON?.error?.message || oBundle.getText("createAnnouncementError"));
                 });
         },
 
         _handleUpdate: function () {
-            const oModel = this.getView().getModel("bannerModel");
+            const oModel = this.getView().getModel(MODEL);
             const oBundle = this.getView().getModel("i18n").getResourceBundle();
-            const sEditId = oModel.getProperty("/editId");
-            const sContent = (oModel.getProperty("/announcementContent") || "").trim();
-            const sPublishDate = oModel.getProperty("/publishDate");
-            const sExpiryDate = oModel.getProperty("/expiryDate");
-            const bPublishLater = oModel.getProperty("/publishLater");
+            const sNow = new Date().toISOString();
 
-            const oBusy = new sap.m.BusyDialog({
-                text: oBundle.getText("updatingAnnouncement")
-            });
+            const oBusy = new sap.m.BusyDialog({ text: oBundle.getText("updatingAnnouncement") });
             oBusy.open();
 
             this.getCurrentUserEmail()
                 .then((sUserEmail) => {
-                    let announcementStatus, startAnnouncement, endAnnouncement, publishedAt;
-                    const currentDateTime = new Date().toISOString();
-                    const oToday = new Date();
-                    oToday.setHours(0, 0, 0, 0);
-                    const oPublishDate = new Date(sPublishDate);
-                    oPublishDate.setHours(0, 0, 0, 0);
-
-                    if (!bPublishLater && oPublishDate.getTime() === oToday.getTime()) {
-                        announcementStatus = "PUBLISHED";
-                        startAnnouncement = currentDateTime;
-                        publishedAt = currentDateTime;
-                    } else {
-                        announcementStatus = "TO_BE_PUBLISHED";
-                        startAnnouncement = new Date(sPublishDate).toISOString();
-                        publishedAt = new Date(sPublishDate).toISOString();
-                    }
-
-                    const oEndDate = new Date(sExpiryDate);
-                    oEndDate.setDate(oEndDate.getDate() + 1);
-                    endAnnouncement = oEndDate.toISOString();
+                    const { announcementStatus, startAnnouncement, endAnnouncement, publishedAt } =
+                        this._buildStatusFields(
+                            oModel.getProperty("/publishDate"),
+                            oModel.getProperty("/expiryDate"),
+                            oModel.getProperty("/publishLater"),
+                            sNow
+                        );
 
                     const oPayload = {
-                        title: sContent,  // Announcement Content goes in title
+                        title: (oModel.getProperty("/announcementContent") || "").trim(),
                         description: "Banner Announcement",
-                        announcementType: "Banner",
-                        announcementStatus: announcementStatus,
-                        startAnnouncement: startAnnouncement,
-                        endAnnouncement: endAnnouncement,
+                        announcementType: BANNER_ANNOUNCEMENT_TYPE,
+                        announcementStatus,
+                        startAnnouncement,
+                        endAnnouncement,
                         publishedBy: sUserEmail,
-                        publishedAt: publishedAt,
-                        modifiedAt: currentDateTime,
+                        publishedAt,
+                        modifiedAt: sNow,
                         modifiedBy: sUserEmail,
-                        toTypes: []
+                        category: "General"
                     };
 
-                    this._getCSRFToken()
-                        .then((csrfToken) => {
+                    return this._getCSRFToken().then((csrfToken) =>
+                        new Promise((resolve, reject) => {
                             $.ajax({
-                                url: `/JnJ_Workzone_Portal_Destination_Node/odata/v2/announcement/Announcements('${sEditId}')`,
+                                url: `/JnJ_Workzone_Portal_Destination_Node/odata/v2/announcement/Announcements('${oModel.getProperty("/editId")}')`,
                                 method: "PATCH",
                                 contentType: "application/json",
                                 dataType: "json",
-                                headers: {
-                                    "X-CSRF-Token": csrfToken
-                                },
+                                headers: { "X-CSRF-Token": csrfToken },
                                 data: JSON.stringify(oPayload),
-                                success: (oResponse) => {
-                                    oBusy.close();
-                                    const sMessage = announcementStatus === "PUBLISHED"
-                                        ? oBundle.getText("updateBannerSuccess")
-                                        : oBundle.getText("updateBannerScheduledSuccess");
-                                    MessageToast.show(sMessage);
-                                    this._navBack();
-                                },
-                                error: (xhr, status, err) => {
-                                    oBusy.close();
-                                    console.error("Update announcement failed:", status, err);
-                                    let sErrorMessage = oBundle.getText("updateAnnouncementError");
-                                    if (xhr.responseJSON?.error?.message) {
-                                        sErrorMessage = xhr.responseJSON.error.message;
-                                    }
-                                    MessageBox.error(sErrorMessage);
-                                }
+                                success: resolve,
+                                error: reject
                             });
                         })
-                        .catch((err) => {
-                            oBusy.close();
-                            console.error("CSRF token fetch failed:", err);
-                            MessageBox.error(oBundle.getText("csrfTokenError"));
-                        });
+                    ).then(() => {
+                        oBusy.close();
+                        MessageToast.show(oBundle.getText(
+                            announcementStatus === "PUBLISHED" ? "updateBannerSuccess" : "updateBannerScheduledSuccess"
+                        ));
+                        this._navBack();
+                    });
                 })
-                .catch((error) => {
+                .catch((oErr) => {
                     oBusy.close();
-                    MessageBox.error(oBundle.getText("getCurrentUserError", [error.message]));
+                    MessageBox.error(oErr?.responseJSON?.error?.message || oBundle.getText("updateAnnouncementError"));
                 });
-        },
-
-        _getCSRFToken: function () {
-            return new Promise((resolve, reject) => {
-                $.ajax({
-                    url: "/JnJ_Workzone_Portal_Destination_Node/odata/v2/announcement/",
-                    method: "GET",
-                    headers: {
-                        "X-CSRF-Token": "Fetch"
-                    },
-                    success: function (data, textStatus, request) {
-                        const token = request.getResponseHeader("X-CSRF-Token");
-                        resolve(token);
-                    },
-                    error: function (xhr, status, err) {
-                        console.error("CSRF token fetch failed:", status, err);
-                        reject(err);
-                    }
-                });
-            });
-        },
-
-        getCurrentUserEmail: async function () {
-            try {
-                const appId = this.getOwnerComponent().getManifestEntry("/sap.app/id");
-                const appPath = appId.replaceAll(".", "/");
-                const appModulePath = jQuery.sap.getModulePath(appPath);
-                const url = appModulePath + "/user-api/currentUser";
-                const oModel = new JSONModel();
-                await oModel.loadData(url);
-
-                const data = oModel.getData();
-                if (data && data.email) {
-                    return data.email;
-                } else {
-                    throw new Error("Email not found in the response.");
-                }
-            } catch (error) {
-                throw new Error("Failed to fetch current user: " + error.message);
-            }
-        },
-
-        onResetPress: function () {
-            const oBundle = this.getView().getModel("i18n").getResourceBundle();
-            MessageBox.confirm(
-                oBundle.getText("resetConfirmMessage"),
-                {
-                    title: oBundle.getText("resetConfirmTitle"),
-                    actions: [MessageBox.Action.YES, MessageBox.Action.NO],
-                    emphasizedAction: MessageBox.Action.NO,
-                    onClose: (oAction) => {
-                        if (oAction === MessageBox.Action.YES) {
-                            this._performReset();
-                        }
-                    }
-                }
-            );
         },
 
         _performReset: function () {
-            const oModel = this.getView().getModel("bannerModel");
+            const oModel = this.getView().getModel(MODEL);
             const oBundle = this.getView().getModel("i18n").getResourceBundle();
-            const bIsEditMode = oModel.getProperty("/isEditMode");
 
-            if (bIsEditMode) {
-                // Reset to original values
-                const sOriginalContent = oModel.getProperty("/originalAnnouncementContent");
-
-                oModel.setProperty("/announcementContent", sOriginalContent);
-                oModel.setProperty("/contentCharCount", `${sOriginalContent.length}/100`);
+            if (oModel.getProperty("/isEditMode")) {
+                const sOrig = oModel.getProperty("/originalAnnouncementContent");
+                oModel.setProperty("/announcementContent", sOrig);
+                oModel.setProperty("/contentCharCount", `${sOrig.length}/100`);
                 oModel.setProperty("/publishDate", oModel.getProperty("/originalPublishDate"));
                 oModel.setProperty("/expiryDate", oModel.getProperty("/originalExpiryDate"));
                 oModel.setProperty("/publishLater", oModel.getProperty("/originalPublishLater"));
-
                 MessageToast.show(oBundle.getText("resetToOriginalMessage"));
-            } else {
-                // Clear all fields
+
+            } else if (oModel.getProperty("/isDuplicateMode")) {
                 this._initBannerModel();
-                this._setDefaultDates();
+                this._setDefaultDates(MODEL);
+                oModel.setProperty("/isDuplicateMode", true);
+                MessageToast.show(oBundle.getText("formReset"));
+
+            } else {
+                this._initBannerModel();
+                this._setDefaultDates(MODEL);
                 MessageToast.show(oBundle.getText("formReset"));
             }
 
-            oModel.setProperty("/showResetButton", false);
-        },
-
-        onNavBack: function () {
-            this._navBack();
-        },
-
-        _navBack: function () {
-            this._router.navTo("Announcement");
+            oModel.setProperty("/resetButtonEnabled", false);
         }
     });
 });

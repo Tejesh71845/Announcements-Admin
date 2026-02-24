@@ -21,23 +21,11 @@
             showNotifications="false"
         />
 
-        <!-- <customHeader>
-            <core:Fragment
-                fragmentName="com.incture.announcements.fragments.ShellBar"
-                type="XML"
-            />
-        </customHeader> -->
-
         <content>
-            <VBox
-                class="sapUiSmallMargin"             
-            >
+            <VBox class="sapUiSmallMargin">
                 <!-- Header Section -->
                 <VBox class="sapUiSmallMarginBottom">
-                    <HBox
-                        alignItems="Center"
-                        class="sapUiSmallMarginBottom"
-                    >
+                    <HBox alignItems="Center">
                         <Button
                             id="idSidebarNavBackBtn"
                             icon="sap-icon://nav-back"
@@ -51,11 +39,11 @@
                     </HBox>
                     <Text
                         text="{i18n>sidebarDescText}"
-                        class="sapUiTinyMarginTop"
+                        class="sapUiSmallMarginBegin"
                     />
                 </VBox>
 
-                <!-- Title and Popup Announcement Section -->
+                <!-- Announcement Details Section -->
                 <VBox
                     class="announcementDetailsSectionCss sapUiSmallMarginBottom"
                 >
@@ -245,7 +233,9 @@
                                 placeholder="{i18n>categoryMultiPlaceholder}"
                                 selectedKeys="{sidebarModel>/categories}"
                                 selectionChange="onCategoryChange"
-                                items="{categoryModel>/category}"
+                                items="{
+                                    path: 'categoryModel>/category'
+                                }"
                                 width="100%"
                             >
                                 <core:Item
@@ -284,7 +274,6 @@
                     <VBox class="sapUiSmallMarginTop">
                         <Label
                             text="{i18n>sectorLabel}"
-                            required="false"
                             class="sapUiTinyMarginBottom"
                         />
                         <HBox wrap="Wrap">
@@ -324,7 +313,8 @@
                     id="idSidebarResetBtn"
                     text="{i18n>resetButton}"
                     press="onResetPress"
-                    visible="{sidebarModel>/showResetButton}"
+                    visible="true"
+                    enabled="{sidebarModel>/resetButtonEnabled}"
                 />
                 <Button
                     id="idSidebarSubmitBtn"

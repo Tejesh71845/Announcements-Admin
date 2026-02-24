@@ -1,8 +1,44 @@
 {
   "category": [
-    { "key": "Reporting", "text": "Reporting" },
-    { "key": "General", "text": "General" },
-    { "key": "Planning/Forecasting", "text": "Planning/Forecasting" },
-    { "key": "A2R", "text": "A2R" }
+    {
+      "key": "Inventory Finance",
+      "text": "Inventory Finance"
+    },
+    {
+      "key": "Treasury",
+      "text": "Treasury"
+    },
+    {
+      "key": "R&D",
+      "text": "R&D"
+    },
+    {
+      "key": "Supply Chain",
+      "text": "Supply Chain"
+    },
+    {
+      "key": "Tax",
+      "text": "Tax"
+    },
+    {
+      "key": "Reporting",
+      "text": "Reporting"
+    },
+    {
+      "key": "I2C",
+      "text": "I2C"
+    },
+    {
+      "key": "P2P",
+      "text": "P2P"
+    },
+    {
+      "key": "A2R",
+      "text": "A2R"
+    },
+    {
+      "key": "Planning/Forecasting",
+      "text": "Planning/Forecasting"
+    }
   ]
 }

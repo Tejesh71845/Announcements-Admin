@@ -125,12 +125,12 @@
           "target": "Announcement"
         },
         {
-          "pattern": "create-sidebar/:announcementId:",
+          "pattern": "create-sidebar/:announcementId:/:duplicate:",
           "name": "CreateSidebarAnnouncement",
           "target": "CreateSidebarAnnouncement"
         },
         {
-          "pattern": "create-banner/:announcementId:",
+          "pattern": "create-banner/:announcementId:/:duplicate:",
           "name": "CreateBannerAnnouncement",
           "target": "CreateBannerAnnouncement"
         }

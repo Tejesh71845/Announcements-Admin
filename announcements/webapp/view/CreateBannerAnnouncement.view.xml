@@ -24,10 +24,7 @@
             >
                 <!-- Header Section -->
                 <VBox class="sapUiSmallMarginBottom">
-                    <HBox
-                        alignItems="Center"
-                        class="sapUiSmallMarginBottom"
-                    >
+                    <HBox alignItems="Center">
                         <Button
                             id="idBannerNavBackBtn"
                             icon="sap-icon://nav-back"
@@ -41,7 +38,7 @@
                     </HBox>
                     <Text
                         text="{i18n>bannerDescText}"
-                        class="sapUiTinyMarginTop"
+                        class="sapUiSmallMarginBegin"
                     />
                 </VBox>
 
@@ -162,13 +159,14 @@
         </content>
 
         <footer>
-            <!-- <OverflowToolbar>
+            <OverflowToolbar>
                 <ToolbarSpacer />
                 <Button
                     id="idBannerResetBtn"
                     text="{i18n>resetButton}"
                     press="onResetPress"
-                    visible="{bannerModel>/showResetButton}"
+                    visible="true"
+                    enabled="{bannerModel>/resetButtonEnabled}"
                 />
                 <Button
                     id="idBannerSubmitBtn"
@@ -176,21 +174,7 @@
                     type="Emphasized"
                     press="onSubmitPress"
                 />
-            </OverflowToolbar> -->
-
-            <Toolbar>
-                <ToolbarSpacer />
-                <Button
-                    text="{i18n>resetButton}"
-                    press="onResetPress"
-                    visible="{sidebarModel>/showResetButton}"
-                />
-                <Button
-                    text="{i18n>submitButton}"
-                    type="Emphasized"
-                    press="onSubmitPress"
-                />
-            </Toolbar>
+            </OverflowToolbar>
         </footer>
     </Page>
 </mvc:View>
