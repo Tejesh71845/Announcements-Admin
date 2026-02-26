@@ -283,6 +283,48 @@ sap.ui.define([
             const bIsEdit = oModel.getProperty("/isEditMode");
             const bIsDup = oModel.getProperty("/isDuplicateMode");
 
+            const { announcementStatus } = this._buildStatusFields(
+                oModel.getProperty("/publishDate"),
+                oModel.getProperty("/expiryDate"),
+                oModel.getProperty("/publishLater")
+            );
+            const bWillBePublished = announcementStatus === "PUBLISHED";
+
+            if (bWillBePublished) {
+                const oAnnouncementModel = this.getOwnerComponent().getModel("announcementModel");
+
+                oAnnouncementModel.read("/Announcements", {
+                    filters: [
+                        new sap.ui.model.Filter("announcementStatus", sap.ui.model.FilterOperator.EQ, "PUBLISHED"),
+                        new sap.ui.model.Filter("announcementType", sap.ui.model.FilterOperator.EQ, "Banner"),
+                        new sap.ui.model.Filter("isActive", sap.ui.model.FilterOperator.EQ, true)
+                    ],
+                    urlParameters: { $select: "announcementId" },
+                    success: (oData) => {
+                        const aPublished = oData?.results || [];
+                        const sCurrentEditId = oModel.getProperty("/editId");
+
+                        const nRelevantCount = bIsEdit
+                            ? aPublished.filter(o => o.announcementId !== sCurrentEditId).length
+                            : aPublished.length;
+
+                        if (nRelevantCount >= 2) {
+                            MessageBox.error(oBundle.getText("maxPublishedBannerError"));
+                            return;
+                        }
+
+                        this._confirmAndSubmit(bIsEdit, bIsDup, oModel, oBundle);
+                    },
+                    error: () => {
+                        MessageBox.error(oBundle.getText("loadAnnouncementError"));
+                    }
+                });
+            } else {
+                this._confirmAndSubmit(bIsEdit, bIsDup, oModel, oBundle);
+            }
+        },
+
+        _confirmAndSubmit: function (bIsEdit, bIsDup, oModel, oBundle) {
             const sConfirmMsg = oBundle.getText(bIsEdit ? "updateConfirmMessage" : bIsDup ? "duplicateConfirmMessage" : "submitConfirmMessage");
             const sConfirmTitle = oBundle.getText(bIsEdit ? "updateConfirmTitle" : bIsDup ? "duplicateConfirmTitle" : "submitConfirmTitle");
 
